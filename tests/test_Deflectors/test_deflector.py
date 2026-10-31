@@ -2,7 +2,10 @@ import pytest
 import numpy.testing as npt
 from slsim.Deflectors.deflector import Deflector
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-from slsim.Deflectors.deflector_util import critical_curves_caustics_list, sources_in_influence_area
+from slsim.Deflectors.deflector_util import (
+    critical_curves_caustics_list,
+    sources_in_influence_area,
+)
 
 
 class TestDeflector(object):

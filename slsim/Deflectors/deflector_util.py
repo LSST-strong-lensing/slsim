@@ -11,6 +11,7 @@ from lenstronomy.LensModel.lens_model_extensions import LensModelExtensions
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from matplotlib.path import Path
 
+
 def deflector_from_table(table, mass_type, extended_source_type, cosmo=None):
     """Create a Deflector() instance from a single table combining the light
     and mass arguments.
@@ -273,15 +274,17 @@ def critical_curves_caustics_list(
 def sources_in_influence_area(
     deflector, sources, source_area=None, z_source_max=10, tolerance=3, cosmo=None
 ):
-    """Return a boolean array, True for each source that is behind `lens`
-    and inside a caustic of `lens` (computed at z_source_max), or within
+    """Return a boolean array, True for each source that is behind `lens` and
+    inside a caustic of `lens` (computed at z_source_max), or within
     `tolerance` arcseconds outside of it.
 
     :param deflector: Deflector or DeflectorGroup object
     :param sources: list of sources
     :param source_area: sky area to compute critical curves in
-    :param z_source_max: source redshift at which the caustics are computed
-    :param tolerance: distance in arcsec from the caustics that still counts
+    :param z_source_max: source redshift at which the caustics are
+        computed
+    :param tolerance: distance in arcsec from the caustics that still
+        counts
     :param cosmo: astropy cosmology instance
     :return: boolean array, one entry per source
     """

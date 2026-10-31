@@ -2,11 +2,17 @@ from slsim.Deflectors import deflector_util
 from slsim.Deflectors.deflector import Deflector
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
-from slsim.Deflectors.deflector_util import critical_curves_caustics_list, sources_in_influence_area
-from slsim.Deflectors.DeflectorPopulation.generate_cluster_deflectors import GeneratedDeflector
+from slsim.Deflectors.deflector_util import (
+    critical_curves_caustics_list,
+    sources_in_influence_area,
+)
+from slsim.Deflectors.DeflectorPopulation.generate_cluster_deflectors import (
+    GeneratedDeflector,
+)
 import slsim.Pipelines as pipelines
 from astropy.units import Quantity
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
+
 
 def test_deflector_from_table():
 
@@ -118,6 +124,7 @@ def test_light2mass_rejects_invalid_double_sersic_light_shapes():
             halo_dict={"theta_E": 1, "gamma_pl": 2},
         )
 
+
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 sky_area = Quantity(value=0.01, unit="deg2")
 galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
@@ -131,8 +138,9 @@ source_galaxies = Galaxies(
     sky_area=sky_area,
     catalog_type="skypy",
 )
-sources = source_galaxies.draw_galaxies(Quantity(100 ** 2, "deg2"))
-deflector = GeneratedDeflector(5 * 10 ** 14, .35, cosmo)
+sources = source_galaxies.draw_galaxies(Quantity(100**2, "deg2"))
+deflector = GeneratedDeflector(5 * 10**14, 0.35, cosmo)
+
 
 def test_critical_curves_caustics():
     ra_crit_list, dec_crit_list, ra_caustic_list, dec_caustic_list = (
@@ -150,5 +158,8 @@ def test_critical_curves_caustics():
     assert len(ra_caustic_list) > 0
     assert len(dec_caustic_list) > 0
 
+
 def test_in_influence_area(self):
-    assert len(sources_in_influence_area(deflector, sources, Quantity(100 ** 2, "deg2"))) == len(sources)
+    assert len(
+        sources_in_influence_area(deflector, sources, Quantity(100**2, "deg2"))
+    ) == len(sources)

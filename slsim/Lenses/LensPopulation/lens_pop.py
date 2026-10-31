@@ -152,7 +152,9 @@ class LensPop(LensedPopulationBase):
             _in_influence_area = sources_in_influence_area(
                 _deflector, _source, source_area, 10, 3, self.cosmo
             )
-            _source_cut = [s for s, in_area in zip(_source, _in_influence_area) if in_area]
+            _source_cut = [
+                s for s, in_area in zip(_source, _in_influence_area) if in_area
+            ]
 
             if len(_source_cut) < min_num_sources:
                 continue
