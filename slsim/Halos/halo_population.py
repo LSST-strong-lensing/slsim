@@ -93,6 +93,9 @@ def dNhalodzdlnM_lens(M, z, cosmo_col, **massfunction_kwargs):
     :return: dNhalodzdlnM, The differential number density of halos per
         unit redshift per natural log mass interval per unit area in
         units of #/deg^2/dlnM[M_sol/h].
+
+    Any kwargs are passed into `colossus.mass_function.massFunction`. Useful params are model and mdef.
+    Default model is sheth99 with mdef fof.
     """
 
     massfunction_params = {"mdef": "fof", "model": "sheth99"}

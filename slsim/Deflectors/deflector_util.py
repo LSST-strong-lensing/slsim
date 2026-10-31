@@ -223,22 +223,22 @@ def set_colossus_cosmo(cosmo):
         ns=0.9660499,
     )
     return colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
-
+4
 
 def critical_curves_caustics_list(
-    deflector, z_source, cosmo, kwargs_critical_curve_caustics=None
+    deflector, z_source, cosmo, multi_plane=False, **kwargs_critical_curve_caustics
 ):
     """Returns list of critical curves and caustics for a source at `z_source`
 
     :param deflector: `DeflectorGroup` or `Deflector` object
     :param z_source: redshift at which to compute curves
     :param cosmo: astropy.cosmology instance
-    :param kwargs_critical_curve_caustics: arguments passed into the `critical_curve_caustics` function from LensModelExtensions. Keys:
-    - compute_window: window size in arcsec where the critical curve is computed
-    - grid_scale: numerical grid spacing of the computation of the critical curves
-    - center_x: float, center of the window to compute critical curves and caustics
-    - center_y: float, center of the window to compute critical curves and caustics
-    - kwargs_lens: lens model kwargs
+    :param multi_plane: use multi plane deflector model
+
+    :param compute_window: window size in arcsec where the critical curve is computed
+    :param grid_scale: numerical grid spacing of the computation of the critical curves
+    :param center_x: float, center of the window to compute critical curves and caustics
+    :param center_y: float, center of the window to compute critical curves and caustics
     """
 
     lens_cosmo = LensCosmo(
@@ -254,7 +254,7 @@ def critical_curves_caustics_list(
         cosmo=cosmo,
         z_lens=deflector.redshift,
         z_source=z_source,
-        multi_plane=False,
+        multi_plane=multi_plane,
     )
 
     lens_model_ext = LensModelExtensions(lens_model)

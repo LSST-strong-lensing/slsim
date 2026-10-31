@@ -218,10 +218,8 @@ class TestDeflector(object):
                 self.deflector_nfw_her,
                 10,
                 None,
-                {
-                    "compute_window": 40,
-                    "grid_scale": 1.0,
-                },
+                compute_window=40,
+                grid_scale=1.0,
             )
         )
 

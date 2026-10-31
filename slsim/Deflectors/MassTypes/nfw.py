@@ -4,7 +4,7 @@ from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_nf
 
 
 class NFW(MassBase):
-    """Class of a NFW lens model."""
+    """Class of a NFW lens model. Also can be used for TNFW (specify truncation_radius) or GNFW (specify gamma_in) profiles."""
 
     def __init__(
         self,
@@ -14,7 +14,9 @@ class NFW(MassBase):
         e1=0,
         e2=0,
         vel_disp=None,
+
         truncation_radius=None,
+        gamma_in=None,
     ):
         """
 
@@ -27,13 +29,18 @@ class NFW(MassBase):
         :param e2: halo eccentricity component 2
         :param vel_disp: velocity dispersion [km/s], optional as pre-computed value.
          ATTENTION: consistency is not checked with mass profile.
-        :param truncation_radius: if not None, uses the truncated nfw profile with this truncation radius
+        :param truncation_radius: if not None, uses the truncated nfw profile with this truncation radius. Ellipticity
+         is not supported. Value is in kpc (physical).
+        :param gamma_in: if not None, uses the generalized nfw profile with this gamma. 1 corresponds to a regular
+         NFW, with lower values being shallower. Ellipticity is supported through gaussian decomposition.
         """
         super().__init__(light=light, vel_disp=vel_disp)
         self._halo_mass = halo_mass
         self._concentration = concentration
         self._e1_mass, self._e2_mass = e1, e2
+
         self._truncation_radius = truncation_radius
+        self._gamma_in = gamma_in
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector. Simplified assumptions on
@@ -69,15 +76,25 @@ class NFW(MassBase):
 
         if self._truncation_radius is not None:
             lens_mass_model_list = ["TNFW"]
+        elif self._gamma_in is not None:
+            if _spherical is True:
+                lens_mass_model_list = ["GNFW"]
+            else:
+                lens_mass_model_list = ["GNFW_ELLIPSE_GAUSS_DEC"]
         elif _spherical is True:
             lens_mass_model_list = ["NFW"]
         else:
             lens_mass_model_list = ["NFW_ELLIPSE_CSE"]
 
         # halo mass, concentration, stellar mass
-        rs_halo, alpha_rs = lens_cosmo.nfw_physical2angle(
-            M=self._halo_mass, c=self._concentration
-        )
+        if self._gamma_in is None:
+            rs_halo, alpha_rs = lens_cosmo.nfw_physical2angle(
+                M=self._halo_mass, c=self._concentration
+            )
+        else:
+            rs_halo, alpha_rs = lens_cosmo.gnfw_physical2angle(
+                M=self._halo_mass, c=self._concentration, gamma_in=self._gamma_in
+            )
         center_x, center_y = self._light.extended_source_position
         kwargs_lens_mass = [
             {
@@ -91,7 +108,8 @@ class NFW(MassBase):
             kwargs_lens_mass[0]["r_trunc"] = lens_cosmo.phys2arcsec_lens(
                 self._truncation_radius / 1000
             )  # function converts mpc to arcsec
-
+        if self._gamma_in is not None:
+            kwargs_lens_mass[0]["gamma_in"] = self._gamma_in
         if _spherical is False:
             e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
                 e1_slsim=self._e1_mass, e2_slsim=self._e2_mass

@@ -37,15 +37,49 @@ class TestNFWHernquist(object):
             "light": light,
         }
         self.nfw_hernquist = NFWHernquist(**self.deflector_dict)
+        
+        self.deflector_dict_tnfw = {
+            "halo_mass": 10**13,
+            "concentration": 10,
+            "e1": 0.1,
+            "e2": -0.1,
+            "light": light,
+            "truncation_radius": 100
+        }
+        self.nfw_hernquist_tnfw = NFWHernquist(**self.deflector_dict_tnfw)
+
+        self.deflector_dict_gnfw = {
+            "halo_mass": 10**13,
+            "concentration": 10,
+            "e1": 0.1,
+            "e2": -0.1,
+            "light": light,
+            "gamma_in": 0.5
+        }
+        self.nfw_hernquist_gnfw = NFWHernquist(**self.deflector_dict_gnfw)
 
     def test_redshift(self):
         z = self.nfw_hernquist._light.redshift
         assert self.deflector_dict["light"].redshift == z
 
+        z = self.nfw_hernquist_tnfw._light.redshift
+        assert self.deflector_dict_tnfw["light"].redshift == z
+
+        z = self.nfw_hernquist_gnfw._light.redshift
+        assert self.deflector_dict_gnfw["light"].redshift == z
+
     def test_halo_properties(self):
         kwargs_halo = self.nfw_hernquist.mass_properties
         assert kwargs_halo["halo_mass"] == self.deflector_dict["halo_mass"]
         assert kwargs_halo["concentration"] == self.deflector_dict["concentration"]
+
+        kwargs_halo = self.nfw_hernquist_tnfw.mass_properties
+        assert kwargs_halo["halo_mass"] == self.deflector_dict_tnfw["halo_mass"]
+        assert kwargs_halo["concentration"] == self.deflector_dict_tnfw["concentration"]
+
+        kwargs_halo = self.nfw_hernquist_gnfw.mass_properties
+        assert kwargs_halo["halo_mass"] == self.deflector_dict_gnfw["halo_mass"]
+        assert kwargs_halo["concentration"] == self.deflector_dict_gnfw["concentration"]
 
     def test_velocity_dispersion(self):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -56,6 +90,16 @@ class TestNFWHernquist(object):
     def test_light_model_lenstronomy(self):
         lens_light_model_list, kwargs_lens_light = (
             self.nfw_hernquist._light.kwargs_extended_light(band="g")
+        )
+        assert len(lens_light_model_list) == 1
+
+        lens_light_model_list, kwargs_lens_light = (
+            self.nfw_hernquist_tnfw._light.kwargs_extended_light(band="g")
+        )
+        assert len(lens_light_model_list) == 1
+
+        lens_light_model_list, kwargs_lens_light = (
+            self.nfw_hernquist_gnfw._light.kwargs_extended_light(band="g")
         )
         assert len(lens_light_model_list) == 1
 
@@ -78,4 +122,20 @@ class TestNFWHernquist(object):
             )
         )
         assert lens_mass_model_list[0] == "NFW"
+        assert len(lens_mass_model_list) == 2
+
+        lens_mass_model_list, kwargs_lens_mass = (
+            self.nfw_hernquist_tnfw.mass_model_lenstronomy(
+                lens_cosmo=lens_cosmo, spherical=True
+            )
+        )
+        assert lens_mass_model_list[0] == "TNFW"
+        assert len(lens_mass_model_list) == 2
+
+        lens_mass_model_list, kwargs_lens_mass = (
+            self.nfw_hernquist_gnfw.mass_model_lenstronomy(
+                lens_cosmo=lens_cosmo, spherical=False
+            )
+        )
+        assert lens_mass_model_list[0] == "GNFW_ELLIPSE_GAUSS_DEC"
         assert len(lens_mass_model_list) == 2
