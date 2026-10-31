@@ -75,11 +75,13 @@ class GeneratedDeflector:
 
         self.z = z
         self.cosmo = cosmo
-        self.angular_diameter_dist = cosmo.angular_diameter_distance(self.z).to_value("kpc")  # distance corresponding to 1 radian
+        self.angular_diameter_dist = cosmo.angular_diameter_distance(self.z).to_value(
+            "kpc"
+        )  # distance corresponding to 1 radian
 
         self.mean_position_angle = np.random.rand() * 2 * np.pi
 
-        mean_ellipticity_host = max( #mass physical
+        mean_ellipticity_host = max(  # mass physical
             0.23, 0.094 * np.log10(self.M200h / self.cosmo.h) - 0.95
         )
         self.ellipticity_host = truncnorm.rvs(  # 1 - q
@@ -91,7 +93,9 @@ class GeneratedDeflector:
 
         if self.verbose:
             print(f"M200: {np.log10(self.M200h):.4g}/h, z: {self.z:.4g}")
-            print(f"R200: {self.R200h:.4g} kpc/h, projected {self.R200h / self.cosmo.h / self.angular_diameter_dist * 206265:.4g} arcsec")
+            print(
+                f"R200: {self.R200h:.4g} kpc/h, projected {self.R200h / self.cosmo.h / self.angular_diameter_dist * 206265:.4g} arcsec"
+            )
             print(f"host concentration: {self.c:.4g}")
             print(f"host ellipticity: {1 - self.ellipticity_host:.4g} (q)")
 
@@ -119,7 +123,8 @@ class GeneratedDeflector:
         """Returns normalized dN / d3r as a function of radius, so the total
         probability over the host halo is 1.
 
-        In the model, when selecting by accretion mass the final position traces host halo density
+        In the model, when selecting by accretion mass the final
+        position traces host halo density
 
         :param r: distance to halo center [kpc / h]
         """
@@ -129,9 +134,7 @@ class GeneratedDeflector:
     def _evolved_subhalo_mass_fraction_of_accretion(self, r):
         """Returns m_evolved / m_acc.
 
-        :param r: distance to halo center [kpc / h]
-
-        Han 2016
+        :param r: distance to halo center [kpc / h]  Han 2016
         """
 
         M = self.M200h / 10**10
@@ -150,7 +153,8 @@ class GeneratedDeflector:
         """Randomly samples subhalos from m_acc_min to m_acc_max (solar masses
         / h)
 
-        Returns array [(accretion mass [solar masses / h], evolved mass [solar masses / h], distance to center [kpc / h])]
+        Returns array [(accretion mass [solar masses / h], evolved mass
+        [solar masses / h], distance to center [kpc / h])]
         """
 
         N_MASS = 1000
@@ -176,7 +180,8 @@ class GeneratedDeflector:
 
         # Full (mass, radius) probability matrix, shape (N_MASS, N_RADIUS - 1)
         probability_present = (
-            accreted_subhalo_expected[:, None] * spatial_distribution_multiplier[None, :]
+            accreted_subhalo_expected[:, None]
+            * spatial_distribution_multiplier[None, :]
         )
 
         # Random sampling
@@ -206,29 +211,23 @@ class GeneratedDeflector:
         min_subhalo_accretion_mass=None,
         crop_subhalo_dist=100,
     ):
-        """Generates the host halo and its subhalos / galaxies
+        """Generates the host halo and its subhalos / galaxies.
 
-        :param min_subhalo_accretion_mass: min subhalo accretion mass [solar masses / h]
-        :param crop_subhalo_dist: only return subhalos closer than this distance to the BCG [arcsecs]
-
-        Returns a list of halo info
-
-        [{
-            "subhalo_m_evolved": subhalo_m_evolved,
-            "dist_to_center": dist_to_center,
-            "concentration": concentrations[i],
-            "pos_2d": pos_2d,
-            "galaxy_mass": galaxy_mass,
-            "red": red,
-            "light_position_angle": light_position_angle,
-        }]
+        :param min_subhalo_accretion_mass: min subhalo accretion mass
+            [solar masses / h]
+        :param crop_subhalo_dist: only return subhalos closer than this
+            distance to the BCG [arcsecs] Returns a list of halo info
+            [{ "subhalo_m_evolved": subhalo_m_evolved, "dist_to_center":
+            dist_to_center, "concentration": concentrations[i],
+            "pos_2d": pos_2d, "galaxy_mass": galaxy_mass, "red": red,
+            "light_position_angle": light_position_angle, }]
         """
 
         if min_subhalo_accretion_mass is None:
             min_subhalo_accretion_mass = 10**-3 * self.M200h
 
         paramc, params = gals_init()
-        
+
         # central halo first, then the sampled subhalos
         halos = np.vstack(
             (
@@ -250,7 +249,7 @@ class GeneratedDeflector:
         )  # concentration distribution 0.16 dex
         concentrations[m_evos > 0] = c
 
-        concentrations[0] = self.c #host
+        concentrations[0] = self.c  # host
 
         halo_data = []
 
@@ -260,7 +259,11 @@ class GeneratedDeflector:
             pos = np.random.normal(size=3)
             pos /= np.linalg.norm(pos)
             pos_2d = (
-                pos[:2] * dist_to_center / self.cosmo.h / self.angular_diameter_dist * 206265
+                pos[:2]
+                * dist_to_center
+                / self.cosmo.h
+                / self.angular_diameter_dist
+                * 206265
             )  # 2d coordinate in arcsecs
 
             pos_2d[0] *= np.sqrt(1 - self.ellipticity_host)
@@ -321,19 +324,21 @@ class GeneratedDeflector:
         blue_galaxies,
         min_subhalo_accretion_mass=None,
         crop_subhalo_dist=100,
-        #subhalo_profile="TNFW",  # TNFW, GBNFW
+        # subhalo_profile="TNFW",  # TNFW, GBNFW
         kwargs_host_mass=None,
     ):
-        """Generate deflector mass and light dicts
+        """Generate deflector mass and light dicts.
 
         :param red_galaxies: catalog of red galaxies to match to
         :param blue_galaxies: catalog of blue galaxies to match to
-        :param min_subhalo_accretion_mass: min subhalo accretion mass [solar masses / h]
-        :param crop_subhalo_dist: only return subhalos closer than this distance to the BCG [arcsecs]
-        
-        To make the host halo GNFW, specify kwargs_host_mass={"gamma_in": gamma}
-
-        returns dict with kwargs_mass_list, kwargs_light_list, center_x_deflector_list, center_y_deflector_list to be passed into DeflectorGroup
+        :param min_subhalo_accretion_mass: min subhalo accretion mass
+            [solar masses / h]
+        :param crop_subhalo_dist: only return subhalos closer than this
+            distance to the BCG [arcsecs] To make the host halo GNFW,
+            specify kwargs_host_mass={"gamma_in": gamma} returns dict
+            with kwargs_mass_list, kwargs_light_list,
+            center_x_deflector_list, center_y_deflector_list to be
+            passed into DeflectorGroup
         """
 
         if self._halos is None:
@@ -390,7 +395,9 @@ class GeneratedDeflector:
                 light_dict = dict(blue_galaxies[closest_real_galaxy_index])
 
             del light_dict["z"]
-            light_dict["extended_source_type"] = "single_sersic"  # TODO hernquist or sersic better
+            light_dict["extended_source_type"] = (
+                "single_sersic"  # TODO hernquist or sersic better
+            )
             light_dict["n_sersic"] = 4  # TODO elliptical / spiral
 
             # eccentricity
@@ -412,15 +419,15 @@ class GeneratedDeflector:
                 }
 
                 if dist_to_center != 0:  # subhalo
-                    #if subhalo_profile == "TNFW":
+                    # if subhalo_profile == "TNFW":
                     mass_dict["truncation_radius"] = (
                         1.4
                         * (subhalo_m_evolved / self.cosmo.h / 10**7) ** (1 / 3)
                         * (dist_to_center / self.cosmo.h / 50) ** (2 / 3)
                     )
-                    #elif subhalo_profile == "GBNFW":
+                    # elif subhalo_profile == "GBNFW":
                     #    raise ValueError()  # TODO
-                    #else:
+                    # else:
                     #    raise ValueError()
                 else:  # host halo
                     # galaxy_projected_eccentricity wants (1 - q^2) / (1 + q^2)
@@ -455,7 +462,7 @@ class GeneratedDeflector:
         blue_galaxies,
         min_subhalo_accretion_mass=None,
         crop_subhalo_dist=100,
-        #subhalo_profile="TNFW",  # TNFW, GBNFW not implemented yet
+        # subhalo_profile="TNFW",  # TNFW, GBNFW not implemented yet
         kwargs_host_mass=None,
     ):
         """
@@ -474,7 +481,7 @@ class GeneratedDeflector:
                 blue_galaxies,
                 min_subhalo_accretion_mass,
                 crop_subhalo_dist,
-                #subhalo_profile=subhalo_profile,
+                # subhalo_profile=subhalo_profile,
                 kwargs_host_mass=kwargs_host_mass,
             ),
         )
@@ -482,8 +489,9 @@ class GeneratedDeflector:
     def _fraction_red_galaxies(self, r, m):
         """Returns probability that a galaxy is red at a distance r (kpc / h)
         with stellar mass m (solar masses / h)
-        
-        Zheng 2025"""
+
+        Zheng 2025
+        """
 
         paramc, params = gals_init()
 
@@ -505,12 +513,10 @@ class GeneratedDeflector:
         A = 1.0 - A1 * (13.0 - log_Mc) ** eta1 * (11.2 - log_Ms) ** nu1
         k = -A2 * (13.0 - log_Mc) ** eta2 * (11.2 - log_Ms) ** nu2
 
-        return np.where(
-            log_Ms > 11.2, 1, np.clip(A * (r / self.Rvir) ** k, 0, 1)
-        )
+        return np.where(log_Ms > 11.2, 1, np.clip(A * (r / self.Rvir) ** k, 0, 1))
 
     def _fraction_central_red(self, central_stellar_mass):
-        """Probability that central galaxy is red. Zheng 2025
+        """Probability that central galaxy is red. Zheng 2025.
 
         :param central_stellar_mass: solar masses / h
         """
@@ -591,8 +597,10 @@ class GeneratedDeflectorPopulation:
 
         Returns DeflectorGroup object
 
-        :param kwargs_host_mass: Specifying kwargs_host_mass={"gamma_in": gamma} makes the
-        host halo a GNFW profile. gamma=1 corresponds to NFW, with lower values being shallower.
+        :param kwargs_host_mass: Specifying
+            kwargs_host_mass={"gamma_in": gamma} makes the host halo a
+            GNFW profile. gamma=1 corresponds to NFW, with lower values
+            being shallower.
         """
 
         M, z = random.choice(self.deflectors)
@@ -600,9 +608,7 @@ class GeneratedDeflectorPopulation:
         if self.verbose:
             print(f"Drew log10(M200h) {np.log10(M):.4f} z {z:.4f}")
 
-        generated_deflector = GeneratedDeflector(
-            M, z, self.cosmo, verbose=self.verbose
-        )
+        generated_deflector = GeneratedDeflector(M, z, self.cosmo, verbose=self.verbose)
 
         return generated_deflector.get_deflector(
             self.red_galaxies,

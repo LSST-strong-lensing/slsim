@@ -1465,7 +1465,9 @@ class Lens(LensedSystemBase):
 
         return kwargs_model, kwargs_params
 
-    def deflector_mass_model_lenstronomy(self, source_index=None, multi_plane=None, use_jax=None):
+    def deflector_mass_model_lenstronomy(
+        self, source_index=None, multi_plane=None, use_jax=None
+    ):
         """Returns lens model instance and parameters in lenstronomy
         conventions.
 
@@ -1519,14 +1521,15 @@ class Lens(LensedSystemBase):
                 else:
                     use_jax = False
         else:
-            lens_redshift_list = None 
+            lens_redshift_list = None
 
             if use_jax is None:
                 # For significant speedup, use these mass profiles from jaxtronomy
                 from slsim.Util.lenstronomy_util import jax_usage
 
                 use_jax = jax_usage(
-                    use_jax=self._use_jax, lens_mass_model_list=self._lens_mass_model_list
+                    use_jax=self._use_jax,
+                    lens_mass_model_list=self._lens_mass_model_list,
                 )
         lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,

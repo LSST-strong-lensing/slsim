@@ -15,7 +15,7 @@ class TestGeneratedDeflector(object):
 
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        self.M200h = 10 ** 14
+        self.M200h = 10**14
         self.z = 0.35
         self.deflector = GeneratedDeflector(self.M200h, self.z, self.cosmo)
 

@@ -8,7 +8,10 @@ from slsim.Deflectors.MassTypes.mass_base import MassBase
 
 
 class NFWHernquist(MassBase):
-    """Class of a NFW+Hernquist lens model with a Hernquist light mode. Can also be used with TNFW and GNFW profiles."""
+    """Class of a NFW+Hernquist lens model with a Hernquist light mode.
+
+    Can also be used with TNFW and GNFW profiles.
+    """
 
     def __init__(
         self,
@@ -18,8 +21,8 @@ class NFWHernquist(MassBase):
         e1=0,
         e2=0,
         vel_disp=None,
-
-        truncation_radius=None, gamma_in=None
+        truncation_radius=None,
+        gamma_in=None,
     ):
         """
 

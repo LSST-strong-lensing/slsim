@@ -223,7 +223,10 @@ def set_colossus_cosmo(cosmo):
         ns=0.9660499,
     )
     return colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
+
+
 4
+
 
 def critical_curves_caustics_list(
     deflector, z_source, cosmo, multi_plane=False, **kwargs_critical_curve_caustics

@@ -128,6 +128,7 @@ class SkyPyPipeline:
         """
         return vstack([self.red_galaxies, self.blue_galaxies])
 
+
 class ExtendedKCorrectTemplates(KCorrectTemplates):
     """SkyPy kcorrect templates padded with zero flux blue-wards of the
     template wavelength range. Original class

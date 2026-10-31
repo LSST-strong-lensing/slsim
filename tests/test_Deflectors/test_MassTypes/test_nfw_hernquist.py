@@ -37,14 +37,14 @@ class TestNFWHernquist(object):
             "light": light,
         }
         self.nfw_hernquist = NFWHernquist(**self.deflector_dict)
-        
+
         self.deflector_dict_tnfw = {
             "halo_mass": 10**13,
             "concentration": 10,
             "e1": 0.1,
             "e2": -0.1,
             "light": light,
-            "truncation_radius": 100
+            "truncation_radius": 100,
         }
         self.nfw_hernquist_tnfw = NFWHernquist(**self.deflector_dict_tnfw)
 
@@ -54,7 +54,7 @@ class TestNFWHernquist(object):
             "e1": 0.1,
             "e2": -0.1,
             "light": light,
-            "gamma_in": 0.5
+            "gamma_in": 0.5,
         }
         self.nfw_hernquist_gnfw = NFWHernquist(**self.deflector_dict_gnfw)
 
