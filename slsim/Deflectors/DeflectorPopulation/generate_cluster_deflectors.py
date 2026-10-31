@@ -216,8 +216,8 @@ class GeneratedDeflector:
         :param min_subhalo_accretion_mass: min subhalo accretion mass
             [solar masses / h]
         :param crop_subhalo_dist: only return subhalos closer than this
-            distance to the BCG [arcsecs] Returns a list of halo info
-            [{ "subhalo_m_evolved": subhalo_m_evolved, "dist_to_center":
+            distance to the BCG [arcsecs] Returns a list of halo info [{
+            "subhalo_m_evolved": subhalo_m_evolved, "dist_to_center":
             dist_to_center, "concentration": concentrations[i],
             "pos_2d": pos_2d, "galaxy_mass": galaxy_mass, "red": red,
             "light_position_angle": light_position_angle, }]
