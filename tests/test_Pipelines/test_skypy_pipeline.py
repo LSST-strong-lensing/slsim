@@ -93,7 +93,7 @@ class TestSkyPyPipeline(object):
     def test_all_galaxies(self):
         blue_galaxies = self.pipeline.blue_galaxies
         red_galaxies = self.pipeline.red_galaxies
-        all_galaxies = self.pipeline.red_galaxies
+        all_galaxies = self.pipeline.all_galaxies
 
         assert len(all_galaxies) == len(red_galaxies) + len(blue_galaxies)
 

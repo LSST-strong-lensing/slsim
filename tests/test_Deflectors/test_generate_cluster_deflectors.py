@@ -7,7 +7,6 @@ from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 
 import numpy as np
-import numpy.testing as npt
 import slsim.Pipelines as pipelines
 
 
@@ -31,7 +30,7 @@ class TestGeneratedDeflector(object):
         assert self.deflector.z == self.z
         assert self.deflector.c > 0
         assert self.deflector.R200h > 0
-        assert self.deflector.Rvir > 0
+        assert self.deflector.Rvirh > 0
 
     def test__accreted_subhalo_density_pdf(self):
         m = np.logspace(10, 13, 5)
@@ -98,7 +97,7 @@ class TestGeneratedDeflector(object):
         assert deflector.redshift == self.z
 
     def test__fraction_red_galaxies(self):
-        out = self.deflector._fraction_red_galaxies(0.5 * self.deflector.R200, 1e10)
+        out = self.deflector._fraction_red_galaxies(self.deflector.R200h / 10, 1e10)
         assert 0 <= out <= 1
 
     def test__fraction_central_red(self):

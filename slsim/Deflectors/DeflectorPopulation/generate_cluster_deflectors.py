@@ -71,7 +71,7 @@ class GeneratedDeflector:
 
         self.M200h = M200h  # solar masses / h
         self.R200h = self.p_nfw.RDelta(z, "200c")  # kpc / h
-        self.Rvir = self.p_nfw.RDelta(z, "vir")  # kpc / h
+        self.Rvirh = self.p_nfw.RDelta(z, "vir")  # kpc / h
 
         self.z = z
         self.cosmo = cosmo
@@ -513,7 +513,7 @@ class GeneratedDeflector:
         A = 1.0 - A1 * (13.0 - log_Mc) ** eta1 * (11.2 - log_Ms) ** nu1
         k = -A2 * (13.0 - log_Mc) ** eta2 * (11.2 - log_Ms) ** nu2
 
-        return np.where(log_Ms > 11.2, 1, np.clip(A * (r / self.Rvir) ** k, 0, 1))
+        return np.where(log_Ms > 11.2, 1, np.clip(A * (r / self.Rvirh) ** k, 0, 1))
 
     def _fraction_central_red(self, central_stellar_mass):
         """Probability that central galaxy is red. Zheng 2025.
