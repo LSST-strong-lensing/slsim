@@ -79,11 +79,11 @@ def calc_vol(z, cosmo_col):
     return (dis * dis / 3282.806350011744) * drdz * (1.0 + z) * (1.0 + z) * (1.0 + z)
 
 
-def dNhalodzdlnM_lens(M, z, cosmo_col):
+def dNhalodzdlnM_lens(M, z, cosmo_col, **massfunction_kwargs):
     """Compute the differential number density of halos with respect to
     redshift and log halo mass, per a unit of solid angle [deg^2]
 
-    :param M: The masses of the dark matter halos.
+    :param M: The masses of the dark matter halos (solar masses / h).
     :type  M: ndarray, float
     :param z: The redshift at which to compute the differential number
         density.
@@ -93,12 +93,18 @@ def dNhalodzdlnM_lens(M, z, cosmo_col):
     :return: dNhalodzdlnM, The differential number density of halos per
         unit redshift per natural log mass interval per unit area in
         units of #/deg^2/dlnM[M_sol/h].
+
+    Any kwargs are passed into `colossus.mass_function.massFunction`. Useful params are model and mdef.
+    Default model is sheth99 with mdef fof.
     """
+
+    massfunction_params = {"mdef": "fof", "model": "sheth99"}
+    massfunction_params.update(**massfunction_kwargs)
+
     dvoldzdO = calc_vol(z, cosmo_col)
     hhh = (cosmo_col.H0 / 100.0) ** 3
     mfunc_so = (
-        mass_function.massFunction(M, z, mdef="fof", model="sheth99", q_out="dndlnM")
-        * hhh
+        mass_function.massFunction(M, z, q_out="dndlnM", **massfunction_params) * hhh
     )
     return dvoldzdO * mfunc_so
 

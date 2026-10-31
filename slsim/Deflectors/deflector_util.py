@@ -6,6 +6,9 @@ from slsim.Deflectors.deflector import Deflector
 from slsim.Util import param_util
 import numpy as np
 from colossus.cosmology import cosmology as colossus_cosmo
+from lenstronomy.LensModel.lens_model import LensModel
+from lenstronomy.LensModel.lens_model_extensions import LensModelExtensions
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 def deflector_from_table(table, mass_type, extended_source_type, cosmo=None):
@@ -219,4 +222,49 @@ def set_colossus_cosmo(cosmo):
         sigma8=0.8102,
         ns=0.9660499,
     )
-    colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
+    return colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
+
+
+4
+
+
+def critical_curves_caustics_list(
+    deflector, z_source, cosmo, multi_plane=False, **kwargs_critical_curve_caustics
+):
+    """Returns list of critical curves and caustics for a source at `z_source`
+
+    :param deflector: `DeflectorGroup` or `Deflector` object
+    :param z_source: redshift at which to compute curves
+    :param cosmo: astropy.cosmology instance
+    :param multi_plane: use multi plane deflector model
+
+    :param compute_window: window size in arcsec where the critical curve is computed
+    :param grid_scale: numerical grid spacing of the computation of the critical curves
+    :param center_x: float, center of the window to compute critical curves and caustics
+    :param center_y: float, center of the window to compute critical curves and caustics
+    """
+
+    lens_cosmo = LensCosmo(
+        z_lens=deflector.redshift,
+        z_source=z_source,
+        cosmo=cosmo,
+    )
+
+    lens_mass_model_list, model_params = deflector.mass_model_lenstronomy(lens_cosmo)
+
+    lens_model = LensModel(
+        lens_model_list=lens_mass_model_list,
+        cosmo=cosmo,
+        z_lens=deflector.redshift,
+        z_source=z_source,
+        multi_plane=multi_plane,
+    )
+
+    lens_model_ext = LensModelExtensions(lens_model)
+    ra_crit_list, dec_crit_list, ra_caustic_list, dec_caustic_list = (
+        lens_model_ext.critical_curve_caustics(
+            model_params, **kwargs_critical_curve_caustics
+        )
+    )
+
+    return ra_crit_list, dec_crit_list, ra_caustic_list, dec_caustic_list

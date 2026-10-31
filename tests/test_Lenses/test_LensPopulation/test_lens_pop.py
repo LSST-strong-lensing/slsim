@@ -13,6 +13,10 @@ from slsim.Deflectors.DeflectorPopulation.compound_lens_halos_galaxies import (
     CompoundLensHalosGalaxies,
 )
 from slsim.Deflectors.DeflectorPopulation.cluster_deflectors import ClusterDeflectors
+from slsim.Deflectors.DeflectorPopulation.generate_cluster_deflectors import (
+    GeneratedDeflectorPopulation,
+)
+
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.Sources.SourceCatalogues.SupernovaeCatalog.supernovae_sample import (
     SupernovaeCatalog,
@@ -250,6 +254,57 @@ def test_cluster_lens_pop_instance():
     assert len(kwargs_model["lens_model_list"]) >= 3  # halo, 1>= subhalo, LoS
     assert len(kwargs_model["lens_light_model_list"]) >= 1  # 1>= member galaxy
     assert pes_lens_class.deflector_velocity_dispersion() > 100
+
+
+def test_cluster_lens_pop_instance_multi_source():
+    sky_area = Quantity(value=0.05, unit="deg2")
+
+    # one of the other tests adds a column to the galaxies table, which causes a bug when creating a Hernquist source
+    _galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
+        skypy_config=None,
+        sky_area=sky_area,
+        filters=None,
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.21, "z_max": 5.0}
+
+    source_galaxies = Galaxies(
+        galaxy_list=_galaxy_simulation_pipeline.all_galaxies,
+        kwargs_cut=kwargs_source_cut,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        catalog_type="skypy",
+    )
+
+    deflectors = GeneratedDeflectorPopulation(
+        10**14.5,
+        10**15,
+        0.3,
+        0.4,
+        _galaxy_simulation_pipeline.red_galaxies,
+        _galaxy_simulation_pipeline.blue_galaxies,
+        Quantity(100, "deg2"),
+        cosmo,
+    )
+
+    lenspop = LensPop(
+        deflector_population=deflectors,
+        source_population=source_galaxies,
+        cosmo=cosmo,
+        sky_area=sky_area,
+    )
+
+    kwargs_lens_cut_plot = {
+        "min_image_separation": 1.0,
+        "max_image_separation": 100.0,
+    }
+
+    pes_lens_class = lenspop.select_lens_at_random_multi_source(
+        source_area=Quantity(40**2, "arcsec2"), **kwargs_lens_cut_plot
+    )
+    assert isinstance(pes_lens_class, Lens)
 
 
 def test_galaxies_lens_pop_instance():
