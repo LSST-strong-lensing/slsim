@@ -430,6 +430,16 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
         delta_pix=0.2,
         num_pix=64,
     )
+    assert (
+        deflector_images_with_different_zeropoint(
+            lens_class=lens_class,
+            band="i",
+            mag_zero_point=[],
+            delta_pix=0.2,
+            num_pix=64,
+        )
+        == []
+    )
     noise_image = image_plus_poisson_noise(result_images[0], exposure_time=30)
     diff_image = noise_image - result_images[0]
     exposure_time = [30] * len(result_images)
@@ -495,11 +505,18 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
     assert np.any(residual != 0)
 
 
-def test_lens_image_series_matches_individual_exposures(pes_lens_instance):
-    """The cached static component must not change the rendered images."""
+@pytest.fixture
+def image_series_optics():
     path = os.path.dirname(__file__)
     psf_kernel = np.load(os.path.join(path, "../TestData/psf_kernels_for_image_1.npy"))
-    transform_pix2angle = np.array([[0.2, 0], [0, 0.2]])
+    return psf_kernel, np.array([[0.2, 0], [0, 0.2]])
+
+
+def test_lens_image_series_matches_individual_exposures(
+    pes_lens_instance, image_series_optics
+):
+    """The cached static component must not change the rendered images."""
+    psf_kernel, transform_pix2angle = image_series_optics
     mag_zero_points = np.array([27.0, 30.0])
     t_obs = np.array([20.0, 30.0])
     psf_kernels = np.array([psf_kernel, psf_kernel])
@@ -536,13 +553,13 @@ def test_lens_image_series_matches_individual_exposures(pes_lens_instance):
     npt.assert_allclose(actual, expected, rtol=1e-12, atol=1e-5)
 
 
-def test_lens_image_series_caches_static_component(pes_lens_instance, monkeypatch):
+def test_lens_image_series_caches_static_component(
+    pes_lens_instance, image_series_optics, monkeypatch
+):
     """The static component is rendered once for a sequence of exposures."""
     import slsim.ImageSimulation.image_simulation as image_simulation
 
-    path = os.path.dirname(__file__)
-    psf_kernel = np.load(os.path.join(path, "../TestData/psf_kernels_for_image_1.npy"))
-    transform_pix2angle = np.array([[0.2, 0], [0, 0.2]])
+    psf_kernel, transform_pix2angle = image_series_optics
     calls = []
     original_sharp_image = image_simulation.sharp_image
 
@@ -566,17 +583,29 @@ def test_lens_image_series_caches_static_component(pes_lens_instance, monkeypatc
 
     assert len(calls) == 1
 
+    calls.clear()
+    n = 2
+    lens_image_series(
+        lens_class=pes_lens_instance,
+        band="i",
+        mag_zero_point=np.array([27.0, 27.0]),
+        num_pix=64,
+        psf_kernel=np.array([psf_kernel] * n),
+        transform_pix2angle=np.array([transform_pix2angle, transform_pix2angle * 0.5]),
+        exposure_time=[None] * n,
+        t_obs=np.linspace(0, 100, n),
+    )
+    assert len(calls) == 2
+
 
 @pytest.mark.parametrize(
     "std_gaussian_noise", [0.1, np.array([0.1, 0.2])], ids=["scalar", "array"]
 )
 def test_lens_image_series_applies_noise_per_exposure(
-    pes_lens_instance, std_gaussian_noise, monkeypatch
+    pes_lens_instance, image_series_optics, std_gaussian_noise, monkeypatch
 ):
     """Scalar and per-exposure Gaussian noise match individual exposures."""
-    path = os.path.dirname(__file__)
-    psf_kernel = np.load(os.path.join(path, "../TestData/psf_kernels_for_image_1.npy"))
-    transform_pix2angle = np.array([[0.2, 0], [0, 0.2]])
+    psf_kernel, transform_pix2angle = image_series_optics
     n = 2
     mag_zero_points = np.array([27.0, 27.0])
     t_obs = np.array([20.0, 30.0])
@@ -623,6 +652,27 @@ def test_lens_image_series_applies_noise_per_exposure(
     )
 
     npt.assert_allclose(actual, expected, rtol=0, atol=1e-10)
+
+
+def test_lens_image_series_rejects_noise_length_mismatch(
+    pes_lens_instance, image_series_optics
+):
+    """A noise array must provide one value per exposure."""
+    psf_kernel, transform_pix2angle = image_series_optics
+    n = 2
+
+    with pytest.raises(ValueError):
+        lens_image_series(
+            lens_class=pes_lens_instance,
+            band="i",
+            mag_zero_point=np.array([27.0, 27.0]),
+            num_pix=64,
+            psf_kernel=np.array([psf_kernel] * n),
+            transform_pix2angle=np.array([transform_pix2angle] * n),
+            exposure_time=[None] * n,
+            t_obs=np.linspace(0, 100, n),
+            std_gaussian_noise=np.array([0.1]),
+        )
 
 
 class TestMultiSourceImageSimulation(object):
