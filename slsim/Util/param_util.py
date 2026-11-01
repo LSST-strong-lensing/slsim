@@ -15,6 +15,21 @@ import warnings
 from astropy.cosmology import default_cosmology
 
 
+def zero_point_scale(zero_point, reference_zero_point):
+    """Flux scale between two magnitude zero points.
+
+    :param zero_point: target magnitude zero point
+    :type zero_point: float
+    :param reference_zero_point: magnitude zero point of the reference
+        image
+    :type reference_zero_point: float
+    :return: multiplicative factor that converts a reference image to
+        the target zero point
+    :rtype: float
+    """
+    return 10 ** (0.4 * (zero_point - reference_zero_point))
+
+
 def update_center(area=None, reference_position=None, center_x=None, center_y=None):
     """Overwrites the source center position.
 

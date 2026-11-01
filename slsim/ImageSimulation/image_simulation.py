@@ -7,6 +7,7 @@ from slsim.Util.param_util import (
     magnitude_to_amplitude,
     convolved_image,
     transformmatrix_to_pixelscale,
+    zero_point_scale,
 )
 
 
@@ -557,18 +558,20 @@ def deflector_images_with_different_zeropoint(
     :param num_pix: number of pixels per axis
     :returns: list of deflector images with different zero point
     """
-    image = []
-    for mag_zero in mag_zero_point:
-        image.append(
-            sharp_image(
-                lens_class=lens_class,
-                band=band,
-                mag_zero_point=mag_zero,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-            )
-        )
-    return image
+    if len(mag_zero_point) == 0:
+        return []
+    reference_mag_zero = mag_zero_point[0]
+    reference_image = sharp_image(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=reference_mag_zero,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+    )
+    return [
+        reference_image * zero_point_scale(mag_zero, reference_mag_zero)
+        for mag_zero in mag_zero_point
+    ]
 
 
 def image_plus_poisson_noise(
@@ -591,9 +594,9 @@ def image_plus_poisson_noise(
     # make sure all values in an image are positive
     image_positive = np.clip(image, 0, None)
     # Compute zero point scaling factor
-    zero_point_scale = 10 ** (0.4 * (coadd_zero_point - single_visit_zero_point))
+    zero_point_factor = zero_point_scale(coadd_zero_point, single_visit_zero_point)
     # Convert counts-per-second to electrons
-    cps_to_electrons = exposure_time * gain / zero_point_scale
+    cps_to_electrons = exposure_time * gain / zero_point_factor
     # get electron count with poisson noise
     noisy_electrons = np.random.poisson(image_positive * cps_to_electrons)
     # convert back to count per sec
@@ -613,6 +616,67 @@ def image_plus_poisson_noise_for_list_of_image(images, exposure_times):
         for data, expo_time in zip(images, exposure_times)
     ]
     return list_of_noisy_images
+
+
+def _lens_image_from_components(
+    lens_class,
+    band,
+    mag_zero_point,
+    num_pix,
+    psf_kernel,
+    transform_pix2angle,
+    delta_pix,
+    static_image,
+    single_visit_mag_zero_points,
+    exposure_time=None,
+    t_obs=None,
+    std_gaussian_noise=None,
+    gain=0.7,
+    microlensing=False,
+):
+    """Compose a lens image from a precomputed static component."""
+    convolved_deflector_source = convolved_image(
+        image=static_image, psf_kernel=psf_kernel
+    )
+    if t_obs is None:
+        image_ps = point_source_image_without_variability(
+            lens_class=lens_class,
+            band=band,
+            mag_zero_point=mag_zero_point,
+            delta_pix=delta_pix,
+            num_pix=num_pix,
+            psf_kernel=psf_kernel,
+            transform_pix2angle=transform_pix2angle,
+        )
+    else:
+        image_ps = point_source_image_at_time(
+            lens_class=lens_class,
+            band=band,
+            mag_zero_point=mag_zero_point,
+            delta_pix=delta_pix,
+            num_pix=num_pix,
+            psf_kernel=psf_kernel,
+            transform_pix2angle=transform_pix2angle,
+            time=t_obs,
+            microlensing=microlensing,
+        )
+    image_ps = np.nan_to_num(image_ps, nan=0)  # Replace NaN if present with 0
+    image = convolved_deflector_source + image_ps
+    # For DP0 images, gain is always 0.7.
+    if exposure_time is not None:
+        final_image = image_plus_poisson_noise(
+            image=image,
+            exposure_time=exposure_time,
+            gain=gain,
+            coadd_zero_point=mag_zero_point,
+            single_visit_zero_point=single_visit_mag_zero_points[band],
+        )
+    else:
+        final_image = image
+    if std_gaussian_noise is not None:
+        gaussian_noise = np.random.normal(0, std_gaussian_noise, final_image.shape)
+        return final_image + gaussian_noise
+    return final_image
 
 
 def lens_image(
@@ -677,48 +741,22 @@ def lens_image(
         with_source=with_source,
         with_deflector=with_deflector,
     )
-    convolved_deflector_source = convolved_image(
-        image=deflector_source, psf_kernel=psf_kernel
+    return _lens_image_from_components(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        num_pix=num_pix,
+        psf_kernel=psf_kernel,
+        transform_pix2angle=transform_pix2angle,
+        delta_pix=delta_pix,
+        static_image=deflector_source,
+        exposure_time=exposure_time,
+        t_obs=t_obs,
+        std_gaussian_noise=std_gaussian_noise,
+        gain=gain,
+        single_visit_mag_zero_points=single_visit_mag_zero_points,
+        microlensing=microlensing,
     )
-    if t_obs is None:
-        image_ps = point_source_image_without_variability(
-            lens_class=lens_class,
-            band=band,
-            mag_zero_point=mag_zero_point,
-            delta_pix=delta_pix,
-            num_pix=num_pix,
-            psf_kernel=psf_kernel,
-            transform_pix2angle=transform_pix2angle,
-        )
-    else:
-        image_ps = point_source_image_at_time(
-            lens_class=lens_class,
-            band=band,
-            mag_zero_point=mag_zero_point,
-            delta_pix=delta_pix,
-            num_pix=num_pix,
-            psf_kernel=psf_kernel,
-            transform_pix2angle=transform_pix2angle,
-            time=t_obs,
-            microlensing=microlensing,
-        )
-    image_ps = np.nan_to_num(image_ps, nan=0)  # Replace NaN if present with 0
-    image = convolved_deflector_source + image_ps
-    if exposure_time is not None:
-        # For DP0 images, gain is always 0.7.
-        final_image = image_plus_poisson_noise(
-            image=image,
-            exposure_time=exposure_time,
-            gain=gain,
-            coadd_zero_point=mag_zero_point,
-            single_visit_zero_point=single_visit_mag_zero_points[band],
-        )
-    else:
-        final_image = image
-    if std_gaussian_noise is not None:
-        gaussian_noise = np.random.normal(0, std_gaussian_noise, final_image.shape)
-        return final_image + gaussian_noise
-    return final_image
 
 
 def lens_image_series(
@@ -756,8 +794,9 @@ def lens_image_series(
     :param exposure_time: list of exposure time for each exposure. It could be single
         exposure time or an exposure map.
     :param t_obs: array of image observation time [day] for a lens.
-    :param std_gaussian_noise: array of standard deviation for gaussian noise for each
-        image
+    :param std_gaussian_noise: standard deviation of the Gaussian noise. A
+        scalar is applied to every exposure, an array supplies one value per
+        exposure.
     :param with_source: If True, simulates image with extended source in lens
         configuration.
     :param with_deflector: If True, simulates image with deflector.
@@ -774,28 +813,78 @@ def lens_image_series(
      LSST single visits in each band.
     :param microlensing: boolean flag to include microlensing variability
     :return: list of series of images of a lens
+
+    Notes
+    -----
+    The static deflector and extended-source component is rendered once per
+    distinct band, pixel scale and component selection. It is then rescaled to
+    each exposure's magnitude zero point, which is exact because the image
+    amplitudes scale linearly with flux.
     """
 
     # If band is one string, extend to list
     if isinstance(band, str):
         band = [band] * len(mag_zero_point)
 
+    if std_gaussian_noise is None:
+        noise_list = [None] * len(mag_zero_point)
+    else:
+        noise_array = np.asarray(std_gaussian_noise)
+        if noise_array.ndim > 0 and noise_array.shape != (len(mag_zero_point),):
+            raise ValueError(
+                "std_gaussian_noise must be a scalar or have one value per exposure."
+            )
+        noise_list = np.broadcast_to(noise_array, len(mag_zero_point))
+
+    static_cache = {}
     image_series = []
-    for time, psf_kern, mag_zero, transf_matrix, expo_time, band_obs in zip(
-        t_obs, psf_kernel, mag_zero_point, transform_pix2angle, exposure_time, band
+    for (
+        time,
+        psf_kern,
+        mag_zero,
+        transf_matrix,
+        expo_time,
+        band_obs,
+        noise,
+    ) in zip(
+        t_obs,
+        psf_kernel,
+        mag_zero_point,
+        transform_pix2angle,
+        exposure_time,
+        band,
+        noise_list,
     ):
-        image = lens_image(
+        delta_pix = transformmatrix_to_pixelscale(transf_matrix)
+        cache_key = (band_obs, delta_pix)
+        if cache_key not in static_cache:
+            reference_mag_zero = mag_zero
+            static_reference = sharp_image(
+                lens_class=lens_class,
+                band=band_obs,
+                mag_zero_point=reference_mag_zero,
+                delta_pix=delta_pix,
+                num_pix=num_pix,
+                with_source=with_source,
+                with_deflector=with_deflector,
+            )
+            static_cache[cache_key] = (reference_mag_zero, static_reference)
+        else:
+            reference_mag_zero, static_reference = static_cache[cache_key]
+        static_image = static_reference * zero_point_scale(mag_zero, reference_mag_zero)
+
+        image = _lens_image_from_components(
             lens_class=lens_class,
             band=band_obs,
             mag_zero_point=mag_zero,
             num_pix=num_pix,
             psf_kernel=psf_kern,
             transform_pix2angle=transf_matrix,
+            delta_pix=delta_pix,
+            static_image=static_image,
             exposure_time=expo_time,
             t_obs=time,
-            std_gaussian_noise=std_gaussian_noise,
-            with_source=with_source,
-            with_deflector=with_deflector,
+            std_gaussian_noise=noise,
             gain=gain,
             single_visit_mag_zero_points=single_visit_mag_zero_points,
             microlensing=microlensing,
