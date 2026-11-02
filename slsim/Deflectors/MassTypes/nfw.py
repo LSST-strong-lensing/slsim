@@ -4,11 +4,7 @@ from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_nf
 
 
 class NFW(MassBase):
-    """Class of a NFW lens model.
-
-    Also can be used for TNFW (specify truncation_radius) or GNFW
-    (specify gamma_in) profiles.
-    """
+    """Class of a NFW lens model."""
 
     def __init__(
         self,
