@@ -6,6 +6,10 @@ from slsim.Deflectors.deflector import Deflector
 from slsim.Util import param_util
 import numpy as np
 from colossus.cosmology import cosmology as colossus_cosmo
+from lenstronomy.LensModel.lens_model import LensModel
+from lenstronomy.LensModel.lens_model_extensions import LensModelExtensions
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+from matplotlib.path import Path
 
 
 def deflector_from_table(table, mass_type, extended_source_type, cosmo=None):
@@ -219,4 +223,106 @@ def set_colossus_cosmo(cosmo):
         sigma8=0.8102,
         ns=0.9660499,
     )
-    colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
+    return colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
+
+
+4
+
+
+def critical_curves_caustics_list(
+    deflector, z_source, cosmo, multi_plane=False, **kwargs_critical_curve_caustics
+):
+    """Returns list of critical curves and caustics for a source at `z_source`
+
+    :param deflector: `DeflectorGroup` or `Deflector` object
+    :param z_source: redshift at which to compute curves
+    :param cosmo: astropy.cosmology instance
+    :param multi_plane: use multi plane deflector model
+
+    :param compute_window: window size in arcsec where the critical curve is computed
+    :param grid_scale: numerical grid spacing of the computation of the critical curves
+    :param center_x: float, center of the window to compute critical curves and caustics
+    :param center_y: float, center of the window to compute critical curves and caustics
+    """
+
+    lens_cosmo = LensCosmo(
+        z_lens=deflector.redshift,
+        z_source=z_source,
+        cosmo=cosmo,
+    )
+
+    lens_mass_model_list, model_params = deflector.mass_model_lenstronomy(lens_cosmo)
+
+    lens_model = LensModel(
+        lens_model_list=lens_mass_model_list,
+        cosmo=cosmo,
+        z_lens=deflector.redshift,
+        z_source=z_source,
+        multi_plane=multi_plane,
+    )
+
+    lens_model_ext = LensModelExtensions(lens_model)
+    ra_crit_list, dec_crit_list, ra_caustic_list, dec_caustic_list = (
+        lens_model_ext.critical_curve_caustics(
+            model_params, **kwargs_critical_curve_caustics
+        )
+    )
+
+    return ra_crit_list, dec_crit_list, ra_caustic_list, dec_caustic_list
+
+
+def sources_in_influence_area(
+    deflector, sources, source_area=None, z_source_max=10, tolerance=3, cosmo=None
+):
+    """Return a boolean array, True for each source that is behind `lens` and
+    inside a caustic of `lens` (computed at z_source_max), or within
+    `tolerance` arcseconds outside of it.
+
+    :param deflector: Deflector or DeflectorGroup object
+    :param sources: list of sources
+    :param source_area: sky area to compute critical curves in
+    :param z_source_max: source redshift at which the caustics are
+        computed
+    :param tolerance: distance in arcsec from the caustics that still
+        counts
+    :param cosmo: astropy cosmology instance
+    :return: boolean array, one entry per source
+    """
+
+    _, _, ra_caustic_list, dec_caustic_list = critical_curves_caustics_list(
+        deflector,
+        z_source_max,
+        cosmo,
+        {
+            "compute_window": np.sqrt(source_area.to_value("arcsec2") / np.pi) * 2,
+            "grid_scale": 0.5,
+        },
+    )
+
+    in_area = [False] * len(sources)
+
+    for i, s in enumerate(sources):
+        if s.redshift <= deflector.redshift:
+            continue
+
+        point = s.extended_source_position
+
+        for ra, dec in zip(ra_caustic_list, dec_caustic_list):
+            curve_path = Path(np.column_stack((ra, dec)))
+
+            # skip tiny curves
+            area = (np.max(ra) - np.min(ra)) * (np.max(dec) - np.min(dec))
+            if area < 1:
+                continue
+
+            # source sits inside this caustic
+            if curve_path.contains_point(point):
+                in_area[i] = True
+                break
+
+            # close to caustic
+            if np.min((ra - point[0]) ** 2 + (dec - point[1]) ** 2) < tolerance**2:
+                in_area[i] = True
+                break
+
+    return in_area
