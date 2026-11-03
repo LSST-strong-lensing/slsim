@@ -4,7 +4,6 @@ from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Sources.Events.BNSMerger.kilonova import Kilonova
 from slsim.ImageSimulation.image_quality_lenstronomy import (
     get_all_supported_bands,
-    get_sncosmo_filtername,
 )
 
 
@@ -21,6 +20,7 @@ class KilonovaEvent(SourceBase):
         kwargs_variability=None,
         kwargs_kilonova=None,
         cosmo=None,
+        backend="redback",
         **kwargs,
     ):
         """
@@ -46,6 +46,8 @@ class KilonovaEvent(SourceBase):
         :type kwargs_kilonova: dict or None
         :param cosmo: Astropy cosmology instance.
         :type cosmo: `~astropy.cosmology`
+        :param backend: Light curve backend, "redback" or "mosfit".
+        :type backend: str
         :param kwargs: Keyword arguments passed to the SourceBase class. This may contain
             source properties such as redshift and offsets from the host galaxy in [arcsec].
         :type kwargs: dict
@@ -61,10 +63,10 @@ class KilonovaEvent(SourceBase):
         self._variability_computed = False
         self._kwargs_variability = kwargs_variability
         self._lightcurve_time = lightcurve_time
-
         self._model_name = model_name
         self._mag_zpsys = mag_zpsys
         self._modeldir = modeldir
+        self._backend = backend
 
         if kwargs_kilonova is None:
             self._kwargs_kilonova = {}
@@ -88,8 +90,8 @@ class KilonovaEvent(SourceBase):
                     model_name=self._model_name,
                     mag_zpsys=self._mag_zpsys,
                     cosmo=self._cosmo,
-                    modeldir=self._modeldir,
-                    **self._kwargs_kilonova,
+                    backend=self._backend,
+                    model_parameters=self._kwargs_kilonova,
                 )
                 self._lightcurve_class = lightcurve_class
 
@@ -100,16 +102,13 @@ class KilonovaEvent(SourceBase):
                 name = "ps_mag_" + element
                 times = self._lightcurve_time
 
-                # Convert SLSim short band labels, such as "i" and "r", to registered
-                # filter names required by Redback, such as "lssti" and "lsstr".
-                # We reuse the existing SLSim/SNcosmo filter-name helper for this mapping.
-                provided_band = get_sncosmo_filtername(element)
+                # Filter handling is performed inside Kilonova.
+                provided_band = element
 
                 try:
                     magnitudes = lightcurve_class.get_apparent_magnitude(
                         time=times,
                         band=provided_band,
-                        zpsys=self._mag_zpsys,
                     )
                     # make sure before and after the event, the flux is zero
                     magnitudes = np.append(np.inf, magnitudes)

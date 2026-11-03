@@ -36,7 +36,7 @@ class TestBNSCatalog:
         return catalog_class, bns_data, test_redshifts
 
     def test_bns_catalog(self, monkeypatch):
-        _, bns_table, test_redshifts = self._bns_data(monkeypatch)
+        catalog_class, bns_table, test_redshifts = self._bns_data(monkeypatch)
 
         assert isinstance(bns_table, Table)
         assert len(bns_table) == 3
@@ -46,6 +46,25 @@ class TestBNSCatalog:
         assert "variability_model" in bns_table.colnames
         assert "mag_zpsys" in bns_table.colnames
 
+        # Check the added columns.
+        for name in [
+            "backend",
+            "kwargs_kilonova",
+            "mass_recycled",
+            "mass_slow",
+            "mass_1",
+            "mass_2",
+            "Mchirp",
+            "q",
+        ]:
+            assert name in bns_table.colnames
+
+        assert np.all(bns_table["backend"] == "redback")
+
+        for parameters in bns_table["kwargs_kilonova"]:
+            assert parameters == catalog_class._kwargs_kilonova
+
+        # Redshift check
         np.testing.assert_array_equal(
             bns_table["z"],
             test_redshifts,
@@ -64,8 +83,20 @@ class TestBNSCatalog:
             "kwargs_kilonova": catalog_class._kwargs_kilonova,
         }
 
+        source_catalog = bns_data[
+            [
+                "z",
+                "lightcurve_time",
+                "model_name",
+                "variability_model",
+                "mag_zpsys",
+                "backend",
+                "kwargs_kilonova",
+            ]
+        ]
+
         bns_population = PointSources(
-            point_source_list=bns_data,
+            point_source_list=source_catalog,
             cosmo=self.cosmo,
             sky_area=self.sky_area,
             kwargs_cut={},

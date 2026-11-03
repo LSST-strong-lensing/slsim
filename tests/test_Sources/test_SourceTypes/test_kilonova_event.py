@@ -192,6 +192,36 @@ class TestKilonovaEvent(object):
         assert self.source_light_curve.reference_magnitude("i") == 21
         assert self.source_light_curve.point_source_magnitude("i") == 21
 
+    def test_light_curve_mosfit(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+
+        source = KilonovaEvent(
+            cosmo=self.cosmo,
+            **self.source_dict,
+            model_type="bns_merger",
+            variability_model="light_curve",
+            kwargs_variability=["F213"],
+            lightcurve_time=np.array([0.5, 1.0, 2.0]),
+            backend="mosfit",
+            model_name="bns",
+            kwargs_kilonova={
+                "Mchirp": 1.2,
+                "q": 0.9,
+            },
+        )
+
+        light_curve = source.light_curve
+
+        assert "F213" in light_curve
+
+        magnitudes = light_curve["F213"]["ps_mag_F213"]
+        assert len(magnitudes) == 5
+        assert np.all(np.isfinite(magnitudes[1:-1]))
+        assert np.isinf(magnitudes[0])
+        assert np.isinf(magnitudes[-1])
+
+        assert source._lightcurve_class._backend == "mosfit"
+
 
 if __name__ == "__main__":
     pytest.main()
