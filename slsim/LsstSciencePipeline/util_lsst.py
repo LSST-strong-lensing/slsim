@@ -296,7 +296,11 @@ def transient_data_with_cadence(
 
         if microlensing:
             magnitudes = lens_class.point_source_magnitude(
-                band=exposure["band"], lensed=True, time=obs_time, microlensing=True, kwargs_microlensing=kwargs_micro
+                band=exposure["band"],
+                lensed=True,
+                time=obs_time,
+                microlensing=True,
+                kwargs_microlensing=kwargs_micro,
             )[0]
         else:
             magnitudes = lens_class.point_source_magnitude(
