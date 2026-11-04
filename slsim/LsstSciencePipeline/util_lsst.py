@@ -221,6 +221,8 @@ def transient_data_with_cadence(
     symmetric=False,
     pix_scale=0.2,
     random_seed=None,
+    microlensing=False,
+    kwargs_microlensing=None,
 ):
     """Puts lensed transient into the provided cadence. For LSST, this will be
     cadence from opsim.
@@ -253,6 +255,10 @@ def transient_data_with_cadence(
         magnitude of each image and associated errors, lens image. If
         the lens system produces fewer than four images, the missing
         magnitudes and errors are filled with -1.
+    :param microlensing: Boolean. If True, microlensing is included in the
+        lightcurve generation.
+    :param kwargs_microlensing: Dictionary of keyword arguments for microlensing
+        parameters.
     """
     copied_exposure_data = exposure_data.copy()
     min_mjd = min(copied_exposure_data["obs_time"])
@@ -287,8 +293,13 @@ def transient_data_with_cadence(
 
     for exposure in copied_exposure_data:
         obs_time = exposure["obs_time_in_days"]
+
         magnitudes = lens_class.point_source_magnitude(
-            band=exposure["band"], lensed=True, time=obs_time
+            band=exposure["band"],
+            lensed=True,
+            time=obs_time,
+            microlensing=True,
+            kwargs_microlensing=kwargs_microlensing,
         )[0]
 
         # Compute noise
