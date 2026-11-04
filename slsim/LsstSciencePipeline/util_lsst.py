@@ -295,7 +295,11 @@ def transient_data_with_cadence(
         obs_time = exposure["obs_time_in_days"]
 
         magnitudes = lens_class.point_source_magnitude(
-            band=exposure["band"], lensed=True, time=obs_time, microlensing=True, kwargs_microlensing=kwargs_microlensing
+            band=exposure["band"],
+            lensed=True,
+            time=obs_time,
+            microlensing=True,
+            kwargs_microlensing=kwargs_microlensing,
         )[0]
 
         # Compute noise
