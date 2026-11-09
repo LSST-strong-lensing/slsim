@@ -225,12 +225,13 @@ class DeflectorKinematics:
             to False and True. The MGEs, mbh, distance and moment are set
             by this class.
         :return: dictionary with "xbin", "ybin" [arcsec] (1d arrays of
-            the bin centers), "model" (V_rms [km/s]) and "flux" (PSF convolved
-            model surface brightness, arbitrary units)
+            the bin centers), "model" (V_rms [km/s]), "flux" (PSF convolved
+            model surface brightness, arbitrary units) and "shape" (2d shape
+            of the map, to reshape the 1d arrays)
         """
 
         # make kinematic grid of bin centers
-        xbin, ybin, _ = self.kinematic_grid(map_half_size, grid_size)
+        xbin, ybin, shape = self.kinematic_grid(map_half_size, grid_size)
 
         inc_min = self.inclination_min()
         if inc is None:  # draw random inclination
@@ -277,6 +278,7 @@ class DeflectorKinematics:
             "ybin": jam.ybin,
             "model": jam.model,
             "flux": jam.flux,
+            "shape": shape,
         }
 
     def vrms_aperture(
