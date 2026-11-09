@@ -103,7 +103,7 @@ class GeneratedDeflector:
                 f"M200: {np.log10(self.M200h / self.cosmo.h):.4g} (physical), z: {self.z:.4g}"
             )
             print(
-                f"R200: {self.R200h:.4g} kpc/h, projected {self.R200h / self.cosmo.h / self.angular_diameter_dist * 206265:.4g} arcsec"
+                f"R200: {(self.R200h / self.cosmo.h):.4g} kpc, projected {self.R200h / self.cosmo.h / self.angular_diameter_dist * 206265:.4g} arcsec"
             )
             print(f"host concentration: {self.c:.4g}")
             print(f"host ellipticity: {1 - self.ellipticity_host:.4g} (q)")
