@@ -114,7 +114,7 @@ class DeflectorKinematics:
         light_model = LightModel(self.light_model_list)
 
         # amplitudes from magnitudes keep the relative weights of the components; the
-        # overall normalization is irrelevant for JAM and is fixed by the first one
+        # overall normalization is irrelevant for JAM
         kwargs_light_amp = data_util.magnitude2amplitude(
             light_model, self.kwargs_light, magnitude_zero_point=0
         )
