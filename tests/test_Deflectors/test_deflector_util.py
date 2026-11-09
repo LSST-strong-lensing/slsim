@@ -138,7 +138,7 @@ source_galaxies = Galaxies(
     sky_area=sky_area,
     catalog_type="skypy",
 )
-sources = source_galaxies.draw_galaxies(Quantity(100**2, "deg2"))
+sources = source_galaxies.draw_galaxies(Quantity(100**2, "arcsec2"))
 deflector = GeneratedDeflector(5 * 10**14, 0.35, cosmo)
 
 

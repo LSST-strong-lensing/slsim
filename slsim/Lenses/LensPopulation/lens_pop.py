@@ -155,7 +155,7 @@ class LensPop(LensedPopulationBase):
         """
 
         n = 0
-        while True:
+        while n < 1000:
             n += 1
 
             # draw random deflector
@@ -242,6 +242,8 @@ class LensPop(LensedPopulationBase):
                         multi_plane="Source",
                         create_field_galaxies=True,
                     )
+
+        raise ValueError("Unable to find lens")
 
     def _draw_source(self, mag_arc_limit=None, magnification_limit=2, **kwargs):
         """Draw from source population considering some additional constraints
