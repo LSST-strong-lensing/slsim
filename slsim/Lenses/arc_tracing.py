@@ -1,7 +1,14 @@
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
-from scipy.ndimage import (binary_closing, binary_dilation, binary_erosion, binary_fill_holes, distance_transform_edt, label,
-                           maximum_filter)
+from scipy.ndimage import (
+    binary_closing,
+    binary_dilation,
+    binary_erosion,
+    binary_fill_holes,
+    distance_transform_edt,
+    label,
+    maximum_filter,
+)
 from skimage.measure import find_contours
 from skimage.morphology import thin
 
@@ -15,11 +22,14 @@ from slsim.Lenses.lens import Lens
 # the coarse pass looks this many times further out from the source than the images are traced so thin images arent missed
 _COARSE_FACTOR = 2
 
+
 def sersic_params(sources, mag_zero_point):
-    """Returns (n_sersic, r_eff, amp) arrays given light dicts of sersic sources
+    """Returns (n_sersic, r_eff, amp) arrays given light dicts of sersic
+    sources.
 
     :param sources: list of (light_model_list, kwargs_light_mag) tuples
-    :param mag_zero_point: scalar, or array-like with one zero point per source
+    :param mag_zero_point: scalar, or array-like with one zero point per
+        source
     :return: n_sersic, r_eff (arcsec), amp arrays
     """
 
@@ -40,8 +50,8 @@ def sersic_params(sources, mag_zero_point):
 
 
 def solve_max_rad_re(n_sersic, amp, amp_min):
-    """
-    Given a sersic number and amplitude at the half light radius, solve for the radius (in terms of half light radius) where amp is amp_min
+    """Given a sersic number and amplitude at the half light radius, solve for
+    the radius (in terms of half light radius) where amp is amp_min.
 
     :param n_sersic: sersic number
     :param amp: amplitude at half light radius
@@ -53,12 +63,13 @@ def solve_max_rad_re(n_sersic, amp, amp_min):
     ratio = 1 + np.log(amp / amp_min) / bn
     ratio = np.clip(ratio, 0, None)
 
-    return ratio ** n_sersic
+    return ratio**n_sersic
 
 
 def dist_hlr(source, x, y):
-    """Returns the distance from (x, y) to the source accounting for ellipticity, in terms of the source's half light radius.
-    Proportional to the source's surface brightness at that point.
+    """Returns the distance from (x, y) to the source accounting for
+    ellipticity, in terms of the source's half light radius. Proportional to
+    the source's surface brightness at that point.
 
     :param source: slsim.Source
     :param x: x source plane position, arcsecs
@@ -79,30 +90,54 @@ def dist_hlr(source, x, y):
     return np.hypot(x, y) / source.angular_size
 
 
-def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1, factor_coarse=12, factor_second=4, x_center=0, y_center=0,
-                               cut=False, return_interior=False, mag_per_arcsec2_cutoff=25, mag_band="F158"):
-    """Finds the outline of every source's images in the search window
+def trace_finite_source_images(
+    lens: Lens,
+    search_window=40,
+    pix_width_fine=0.1,
+    factor_coarse=12,
+    factor_second=4,
+    x_center=0,
+    y_center=0,
+    cut=False,
+    return_interior=False,
+    mag_per_arcsec2_cutoff=25,
+    mag_band="F158",
+):
+    """Finds the outline of every source's images in the search window.
 
-    Ray shoots a coarse grid to find roughly where the images of each source are. The first pass looks out to twice the radius the images are traced to to avoid missing thin sources. The coarse pixels it finds are divided into a smaller grid and ray shot again. Starting from those points, each hit is expanded outwards until it finds the boundaries.
+    Ray shoots a coarse grid to find roughly where the images of each
+    source are. The first pass looks out to twice the radius the images
+    are traced to to avoid missing thin sources. The coarse pixels it
+    finds are divided into a smaller grid and ray shot again. Starting
+    from those points, each hit is expanded outwards until it finds the
+    boundaries.
 
     This function was partially written by AI
 
     :param lens: slsim.Lens
-    :param search_window: width of the square search window, arcsecs. Rounded to a whole number of coarse pixels
+    :param search_window: width of the square search window, arcsecs.
+        Rounded to a whole number of coarse pixels
     :param pix_width_fine: width of a fine pixel
-    :param factor_coarse: width of a coarse pixel, in fine pixels, must be a multiple of factor_second
+    :param factor_coarse: width of a coarse pixel, in fine pixels, must
+        be a multiple of factor_second
     :param factor_second: width of a second pass pixel, in fine pixels
     :param x_center: center of the search window
     :param y_center: center of the search window
     :param cut: skip sources that have a single small image
-    :param return_interior: return the pixels inside each image instead of its outline
-    :param mag_per_arcsec2_cutoff: images are traced out to where the source is this faint, in mag per arcsec^2
-    :param mag_band: band in which intensity is calculated. Defaults to Roman F158, must change if not generating Roman magnitudes
-
-    Returns a list of lists of (X array, Y array), in arcsecs. These are the traced outlines / interiors of every image for each source.
+    :param return_interior: return the pixels inside each image instead
+        of its outline
+    :param mag_per_arcsec2_cutoff: images are traced out to where the
+        source is this faint, in mag per arcsec^2
+    :param mag_band: band in which intensity is calculated. Defaults to
+        Roman F158, must change if not generating Roman magnitudes
+        Returns a list of lists of (X array, Y array), in arcsecs. These
+        are the traced outlines / interiors of every image for each
+        source.
     """
 
-    lens_model, kwargs_lens = lens.deflector_mass_model_lenstronomy(multi_plane=False, use_jax=False)
+    lens_model, kwargs_lens = lens.deflector_mass_model_lenstronomy(
+        multi_plane=False, use_jax=False
+    )
     sources = lens._source
 
     # Pixel widths
@@ -128,14 +163,18 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
 
     # alpha is computed at the lens model's own scaling, ratios rescale it for each source
     alpha_scalings = lens_model._lensCosmo.beta_double_source_plane(
-        z_lens=np.atleast_1d(lens.deflector_redshift)[0],  # if deflector redshift is an array
+        z_lens=np.atleast_1d(lens.deflector_redshift)[
+            0
+        ],  # if deflector redshift is an array
         z_source_1=[s.redshift for s in sources],
         z_source_2=lens_model._z_source_convention,
     )
     ratios = np.asarray(alpha_scalings) / lens_model.lens_model._alpha_scaling
 
     # how far out to trace each source, in half light radii
-    n_sersic, _, amp = sersic_params([s.kwargs_extended_light(mag_band) for s in sources], mag_per_arcsec2_cutoff)
+    n_sersic, _, amp = sersic_params(
+        [s.kwargs_extended_light(mag_band) for s in sources], mag_per_arcsec2_cutoff
+    )
     max_radii = solve_max_rad_re(n_sersic, amp, 1)
 
     # First pass, out to _COARSE_FACTOR times the radius. Keep the sources that have coarse pixels near enough
@@ -143,16 +182,26 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
     coarse_alpha_x, coarse_alpha_y = lens_model.alpha(x_coarse, y_coarse, kwargs_lens)
 
     candidates = []  # (source index, distance at the coarse pixels, second pass pixels)
-    second_needed = np.zeros((num_second, num_second), dtype=bool)  # the second pass pixels of all the sources
+    second_needed = np.zeros(
+        (num_second, num_second), dtype=bool
+    )  # the second pass pixels of all the sources
 
     for i, source in enumerate(sources):
         # the distance to the source of every coarse pixel, after ray shooting it to the source plane
-        distance = dist_hlr(source, x_coarse - coarse_alpha_x * ratios[i], y_coarse - coarse_alpha_y * ratios[i])
+        distance = dist_hlr(
+            source,
+            x_coarse - coarse_alpha_x * ratios[i],
+            y_coarse - coarse_alpha_y * ratios[i],
+        )
         near = distance <= _COARSE_FACTOR * max_radii[i]
 
         if near.any():
             # divide every near coarse pixel into second pass pixels
-            sx, sy = np.nonzero(np.kron(near, np.ones((second_per_coarse, second_per_coarse), dtype=bool)))
+            sx, sy = np.nonzero(
+                np.kron(
+                    near, np.ones((second_per_coarse, second_per_coarse), dtype=bool)
+                )
+            )
             second_needed[sx, sy] = True
             candidates.append((i, distance, sx, sy))
 
@@ -162,9 +211,13 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
 
     if candidates:
         mx, my = np.nonzero(second_needed)
-        second_alpha_x[mx, my], second_alpha_y[mx, my] = lens_model.alpha(second_x[mx], second_y[my], kwargs_lens)
+        second_alpha_x[mx, my], second_alpha_y[mx, my] = lens_model.alpha(
+            second_x[mx], second_y[my], kwargs_lens
+        )
 
-    traced = []  # sources that get a fine pass: (source index, distance at the coarse pixels, coarse pixels with a hit, second pass pixels with a hit)
+    traced = (
+        []
+    )  # sources that get a fine pass: (source index, distance at the coarse pixels, coarse pixels with a hit, second pass pixels with a hit)
 
     for i, distance, sx, sy in candidates:
         x = second_x[sx] - ratios[i] * second_alpha_x[sx, sy]
@@ -182,10 +235,15 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
         if cut:
             # a single image (holes in it, like an Einstein ring, do not count as separate images) that is no longer than 5 coarse pixels along the
             # diagonal of its bounding box is skipped
-            images, num_images = label(binary_fill_holes(hit), structure=np.ones((3, 3)))
+            images, num_images = label(
+                binary_fill_holes(hit), structure=np.ones((3, 3))
+            )
             xs, ys = np.nonzero(images)
 
-            if num_images == 1 and np.hypot(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1) <= 5:
+            if (
+                num_images == 1
+                and np.hypot(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1) <= 5
+            ):
                 continue
 
         traced.append((i, distance, hit, sx, sy))
@@ -201,7 +259,9 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
         # The seed is the part of an image that is trusted to be inside without ray shooting it. The distance to the source is only known at the
         # coarse pixels, so it is interpolated onto the fine pixels around the image. The seed is where that says inside, but with a margin of a
         # couple of pixels. The ray shooting after this only goes outwards, so a seed that is too big would never get corrected.
-        spline = RectBivariateSpline(coarse_x, coarse_y, distance - max_radii[i], kx=degree, ky=degree)
+        spline = RectBivariateSpline(
+            coarse_x, coarse_y, distance - max_radii[i], kx=degree, ky=degree
+        )
         labels, num_images = label(hit, structure=np.ones((3, 3)))
 
         for n in range(1, num_images + 1):
@@ -212,10 +272,18 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
                 continue
 
             # The coarse pixels around the image, with a margin of one
-            x0, x1 = max(xs.min() - 1, 0) * factor_coarse, min(xs.max() + 2, num_pix) * factor_coarse
-            y0, y1 = max(ys.min() - 1, 0) * factor_coarse, min(ys.max() + 2, num_pix) * factor_coarse
+            x0, x1 = (
+                max(xs.min() - 1, 0) * factor_coarse,
+                min(xs.max() + 2, num_pix) * factor_coarse,
+            )
+            y0, y1 = (
+                max(ys.min() - 1, 0) * factor_coarse,
+                min(ys.max() + 2, num_pix) * factor_coarse,
+            )
 
-            seed = binary_erosion(spline(fine_x[x0:x1], fine_y[y0:y1]) < 0, iterations=2)
+            seed = binary_erosion(
+                spline(fine_x[x0:x1], fine_y[y0:y1]) < 0, iterations=2
+            )
             inside[i][x0:x1, y0:y1] |= seed
 
         known[i] = inside[i].copy()
@@ -225,13 +293,17 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
         start = np.zeros((num_fine, num_fine), dtype=bool)
         start_x = np.rint((second_x[sx] - fine_x[0]) / fine_width).astype(int)
         start_y = np.rint((second_y[sy] - fine_y[0]) / fine_width).astype(int)
-        start[np.clip(start_x, 0, num_fine - 1), np.clip(start_y, 0, num_fine - 1)] = True
+        start[np.clip(start_x, 0, num_fine - 1), np.clip(start_y, 0, num_fine - 1)] = (
+            True
+        )
 
         todo[i] = binary_dilation(start | inside[i]) & ~known[i]
 
     fine_alpha_x = np.zeros((num_fine, num_fine))
     fine_alpha_y = np.zeros((num_fine, num_fine))
-    fine_done = np.zeros((num_fine, num_fine), dtype=bool)  # the fine pixels that have their deflection angle
+    fine_done = np.zeros(
+        (num_fine, num_fine), dtype=bool
+    )  # the fine pixels that have their deflection angle
 
     # All the images grow together, so that every step is one call to the lens model for all of them
     todo = {i: mask for i, mask in todo.items() if mask.any()}
@@ -241,7 +313,9 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
 
         if needed.any():
             mx, my = np.nonzero(needed)
-            fine_alpha_x[mx, my], fine_alpha_y[mx, my] = lens_model.alpha(fine_x[mx], fine_y[my], kwargs_lens)
+            fine_alpha_x[mx, my], fine_alpha_y[mx, my] = lens_model.alpha(
+                fine_x[mx], fine_y[my], kwargs_lens
+            )
             fine_done |= needed
 
         for i, mask in todo.items():
@@ -278,11 +352,19 @@ def trace_finite_source_images(lens: Lens, search_window=40, pix_width_fine=0.1,
                 all_images[i].append((fine_x[xs], fine_y[ys]))
         else:
             # padding makes sure the contours close at the edge
-            for contour in find_contours(np.pad(mask.T, 1).astype(float), 0.5, fully_connected="high"):
+            for contour in find_contours(
+                np.pad(mask.T, 1).astype(float), 0.5, fully_connected="high"
+            ):
                 # undo the padding to get fine pixel coordinates, then convert to arcsecs
-                all_images[i].append((fine_x[0] + (contour[:, 1] - 1) * fine_width, fine_y[0] + (contour[:, 0] - 1) * fine_width))
+                all_images[i].append(
+                    (
+                        fine_x[0] + (contour[:, 1] - 1) * fine_width,
+                        fine_y[0] + (contour[:, 0] - 1) * fine_width,
+                    )
+                )
 
     return all_images
+
 
 def _find_midline(arc, pix_width=0.1):
     """
@@ -290,7 +372,7 @@ def _find_midline(arc, pix_width=0.1):
     Returns (x, y, dist_edge) midline points arrays
     """
 
-    (X, Y) = arc
+    X, Y = arc
 
     # Convert physical coordinates to grid indices
     ix = np.floor(X / pix_width).astype(int)
@@ -313,22 +395,15 @@ def _find_midline(arc, pix_width=0.1):
     distance = distance_transform_edt(mask)
 
     # Local maximum of the distance transform
-    local_max = maximum_filter(
-        distance,
-        size=9
-    )
+    local_max = maximum_filter(distance, size=9)
 
     # Keep points close to the local maximum
-    ridge = (
-        (distance >= local_max - 2.0) & mask
-    )
+    ridge = (distance >= local_max - 2.0) & mask
 
     # Lightly close small gaps
     if min(ridge.shape) >= 5:
         ridge = binary_closing(
-            ridge,
-            structure=np.ones((5, 5), dtype=bool),
-            iterations=3
+            ridge, structure=np.ones((5, 5), dtype=bool), iterations=3
         )
 
     ridge = thin(ridge)
@@ -357,10 +432,10 @@ def compute_LW_phi(arc, pix_width=0.1):
     :returns: (length, width, orientation)
     """
 
-    (_, _, distedge) = _find_midline(arc, pix_width)
+    _, _, distedge = _find_midline(arc, pix_width)
     W = 2 * np.mean(distedge)
 
-    (X, Y) = arc
+    X, Y = arc
 
     cx, cy = np.mean(X), np.mean(Y)
 
@@ -373,6 +448,8 @@ def compute_LW_phi(arc, pix_width=0.1):
     ang_vector = (p2x - p1x, p2y - p1y)
     L = np.hypot(*ang_vector)
 
-    phi = np.abs(np.dot(ang_vector, (cx, cy)) / np.hypot(cx, cy) / np.hypot(*ang_vector))
+    phi = np.abs(
+        np.dot(ang_vector, (cx, cy)) / np.hypot(cx, cy) / np.hypot(*ang_vector)
+    )
 
     return L, W, phi

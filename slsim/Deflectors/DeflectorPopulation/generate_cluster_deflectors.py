@@ -99,7 +99,9 @@ class GeneratedDeflector:
         )
 
         if self.verbose:
-            print(f"M200: {np.log10(self.M200h / self.cosmo.h):.4g} (physical), z: {self.z:.4g}")
+            print(
+                f"M200: {np.log10(self.M200h / self.cosmo.h):.4g} (physical), z: {self.z:.4g}"
+            )
             print(
                 f"R200: {self.R200h:.4g} kpc/h, projected {self.R200h / self.cosmo.h / self.angular_diameter_dist * 206265:.4g} arcsec"
             )
@@ -127,10 +129,10 @@ class GeneratedDeflector:
         return (a1 * mu**-al1 + a2 * mu**-al2) * np.exp(-b * mu**beta)
 
     def _unevolved_spatial_distribution_pdf(self, r, m_acc):
-        """
-        Given an accretion mass, returns the evolved spatial distribution pdf with respect to r.
-        This was fit empirically from the Symphony simulations, figure 8
-        Han 2016 model places all subhalos tracing the host density, with massive satellites are more centrally concentrated
+        """Given an accretion mass, returns the evolved spatial distribution
+        pdf with respect to r. This was fit empirically from the Symphony
+        simulations, figure 8 Han 2016 model places all subhalos tracing the
+        host density, with massive satellites are more centrally concentrated.
 
         r: distance to center [kpc / h]
         m_acc_h: accretion subhalo mass [solar masses / h]
@@ -142,10 +144,10 @@ class GeneratedDeflector:
         r_f = r / self.Rvirh
         ln_rf = np.log(r_f)
 
-        A = 0.914 * (1 - np.exp(-1.55 * mu ** 1.433))
-        B = 0.4885 * (1 - np.exp(-1.96 * mu ** 0.667))
+        A = 0.914 * (1 - np.exp(-1.55 * mu**1.433))
+        B = 0.4885 * (1 - np.exp(-1.96 * mu**0.667))
 
-        CDF = np.exp(A * ln_rf - B * ln_rf ** 2)
+        CDF = np.exp(A * ln_rf - B * ln_rf**2)
         PDF = CDF / r * (A - 2 * B * ln_rf)
 
         return PDF
@@ -183,14 +185,13 @@ class GeneratedDeflector:
 
         r = self.R200h * np.linspace(0.001, 1, N_RADIUS)  # TODO splashback radius
 
-        #d3r = 4 / 3 * np.pi * (r[1:] ** 3 - r[:-1] ** 3)
+        # d3r = 4 / 3 * np.pi * (r[1:] ** 3 - r[:-1] ** 3)
         dr = r[1:] - r[:-1]
 
         # spatial distribution depends on accretion mass
         spatial_distribution_multiplier = (
-            self._unevolved_spatial_distribution_pdf(
-                r[:-1][None, :], m_acc[:, None]
-            ) * dr[None, :]
+            self._unevolved_spatial_distribution_pdf(r[:-1][None, :], m_acc[:, None])
+            * dr[None, :]
         )
 
         # expected number for each mass bin
@@ -199,8 +200,7 @@ class GeneratedDeflector:
 
         # full (mass, radius) probability matrix
         probability_present = (
-            accreted_subhalo_expected[:, None]
-            * spatial_distribution_multiplier
+            accreted_subhalo_expected[:, None] * spatial_distribution_multiplier
         )
 
         rng = np.random.default_rng()

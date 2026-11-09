@@ -12,6 +12,7 @@ from slsim.Lenses.arc_tracing import trace_finite_source_images, compute_LW_phi
 from tqdm import tqdm
 from slsim.Util.param_util import image_separation_from_positions
 
+
 class LensPop(LensedPopulationBase):
     """Class to perform samples of lens population."""
 
@@ -118,27 +119,38 @@ class LensPop(LensedPopulationBase):
         min_arc_length=None,
         min_LW_ratio=0,
         mag_per_arcsec2_cutoff=27,
-        mag_band="r"
+        mag_band="r",
     ):
-        """Draw a random lens with an entire source field spanning `source_area`, with at least min_num_sources satisfying the requirements. Can be used to find systems with either multiply imaged sources or with giant arcs.
+        """Draw a random lens with an entire source field spanning
+        `source_area`, with at least min_num_sources satisfying the
+        requirements. Can be used to find systems with either multiply imaged
+        sources or with giant arcs.
 
-        To find systems with multiply images sources, min_num_images must be specified as well as optionally min_image_separation.
+        To find systems with multiply images sources, min_num_images
+        must be specified as well as optionally min_image_separation.
 
-        To find systems with giant arcs, min_arc_length must be specified as well as optionally min_LW_ratio.
+        To find systems with giant arcs, min_arc_length must be
+        specified as well as optionally min_LW_ratio.
 
         :param sky_area: Sky area to draw sources from
         :type sky_area: (astropy.units.Quantity)
-        :param min_num_sources: Minimum number of lensed sources that must satisfy requirements
+        :param min_num_sources: Minimum number of lensed sources that
+            must satisfy requirements
         :type min_num_sources: int
-        :param min_image_separation: Minimum image separation in arcsecs for multiply lensed sources. min_num_images must be specified or this won't do anything.
+        :param min_image_separation: Minimum image separation in arcsecs
+            for multiply lensed sources. min_num_images must be
+            specified or this won't do anything.
         :type min_image_separation: int
-        :param min_num_images: Minimum number of images for a source, default 1
+        :param min_num_images: Minimum number of images for a source,
+            default 1
         :type min_num_images: int
-        :param return_only_valid_sources: Return a lens class only with sources satisfy the cuts. Default False.
+        :param return_only_valid_sources: Return a lens class only with
+            sources satisfy the cuts. Default False.
         :type return_only_valid_sources: bool
         :param verbose: verbose
         :type verbose: bool
-        :return: Lens() instance with parameters of the deflector and lens and source field.
+        :return: Lens() instance with parameters of the deflector and
+            lens and source field.
         :rtype: Lens
         """
 
@@ -162,7 +174,7 @@ class LensPop(LensedPopulationBase):
                 create_field_galaxies=True,
             )
 
-            #Field galaxies removed
+            # Field galaxies removed
             source = test_lens._source
 
             images = trace_finite_source_images(
@@ -170,7 +182,7 @@ class LensPop(LensedPopulationBase):
                 search_window=np.sqrt(source_area.to_value("arcsec2") / np.pi) * 2,
                 mag_per_arcsec2_cutoff=mag_per_arcsec2_cutoff,
                 mag_band=mag_band,
-                return_interior=True
+                return_interior=True,
             )
 
             valid = [True] * len(source)
@@ -184,7 +196,10 @@ class LensPop(LensedPopulationBase):
                         np.array([np.mean(X) for X, _ in images[src]]),
                         np.array([np.mean(Y) for _, Y in images[src]]),
                     )
-                    if image_separation_from_positions(image_centers) < min_image_separation:
+                    if (
+                        image_separation_from_positions(image_centers)
+                        < min_image_separation
+                    ):
                         valid[src] = False
                         continue
 
@@ -192,7 +207,12 @@ class LensPop(LensedPopulationBase):
                     # at least one image has to be longer than min_arc_length and have a high enough LW ratio
                     arc_info = [compute_LW_phi(image) for image in images[src]]
 
-                    if not any([a[0] > min_arc_length and a[0] / a[1] > min_LW_ratio for a in arc_info]):
+                    if not any(
+                        [
+                            a[0] > min_arc_length and a[0] / a[1] > min_LW_ratio
+                            for a in arc_info
+                        ]
+                    ):
                         valid[src] = False
                         continue
 
@@ -215,9 +235,7 @@ class LensPop(LensedPopulationBase):
                     return Lens(
                         deflector_class=_deflector,
                         source_class=[
-                            _source[i]
-                            for i in range(len(_source))
-                            if valid[i]
+                            _source[i] for i in range(len(_source)) if valid[i]
                         ],
                         cosmo=self.cosmo,
                         use_jax=self._use_jax,
