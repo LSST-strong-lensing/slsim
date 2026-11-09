@@ -1,1 +1,0 @@
-All the notebooks have been moved to the [SLSim tutorials repository](https://github.com/LSST-strong-lensing/slsim-tutorials/tree/main).

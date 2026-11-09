@@ -280,7 +280,7 @@ def test_cluster_lens_pop_instance_multi_source():
 
     deflectors = GeneratedDeflectorPopulation(
         10**14.5,
-        10**15,
+        10**15.2,
         0.3,
         0.4,
         _galaxy_simulation_pipeline.red_galaxies,
@@ -296,14 +296,16 @@ def test_cluster_lens_pop_instance_multi_source():
         sky_area=sky_area,
     )
 
-    kwargs_lens_cut_plot = {
-        "min_image_separation": 1.0,
-        "max_image_separation": 100.0,
-    }
-
     pes_lens_class = lenspop.select_lens_at_random_multi_source(
-        source_area=Quantity(40**2, "arcsec2"), **kwargs_lens_cut_plot
+        source_area=Quantity(80**2, "arcsec2"), min_num_images=3
     )
+    pes_lens_class = lenspop.select_lens_at_random_multi_source(
+        source_area=Quantity(80**2, "arcsec2"), min_num_images=3, min_num_sources=2, min_images_separation=5
+    )
+    pes_lens_class = lenspop.select_lens_at_random_multi_source(
+        source_area=Quantity(80**2, "arcsec2"), min_arc_length=20, min_LW_ratio=7
+    )
+
     assert isinstance(pes_lens_class, Lens)
 
 

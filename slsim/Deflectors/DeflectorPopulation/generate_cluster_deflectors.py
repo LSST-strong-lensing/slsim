@@ -6,22 +6,24 @@ Model summary:
 1. First, the accretion subhalo masses are sampled from the SHMF given in Han et al. (2018)
 
 2. Host halo concentration is set by the Diemer19 mass-concentration relation with log scatter 0.33
-The accreted subhalos are placed randomly in the host halo (within R200) tracing the host halo density
 
-3. The evolved subhalo masses are calculated according to eq. 7 in Han 2016, with some subhalos being completely stripped (orphan galaxies)
+3. The accreted subhalos are placed from empirical relations taken from the Symphony simulations (Nadler et al 2023).
+More massive subhalos are more centrally concentrated. In the original Han model, all subhalos are placed tracing the host density.
+
+4. The evolved subhalo masses are calculated according to eq. 7 in Han 2016, with some subhalos being completely stripped (orphan galaxies)
 Subhalo concentration is chosen the same way using the accretion mass
 Subhalos use a truncated NFW profile with truncation radius from eq. 6 in Gilman et al. (2016)
 
-4. Galaxy masses are calculated from subhalo accretion mass from the Behroozi SMHM relation, with log scatter 0.2
+5. Galaxy masses are calculated from subhalo accretion mass from the Behroozi SMHM relation, with log scatter 0.2
 
-5. Galaxies are randomly selected as red or blue according to their mass, the halo mass and their distance to the center.
+6. Galaxies are randomly selected as red or blue according to their mass, the halo mass and their distance to the center.
 Relations are given from Zheng et al. 2025
 
-6. The closest matching red / blue galaxy in terms of stellar mass and redshift is then selected from the skypy catalog
+7. The closest matching red / blue galaxy in terms of stellar mass and redshift is then selected from the skypy catalog
 
-TODO better truncation radius, eccentricity for subhalos, better relations between satellite galaxies and subhalos,
+TODO better truncation radius, eccentricity for subhalos, better HOD model,
 more accurate subhalo evolution (update concentration parameter or GBNFW. also orphan galaxies may be a numerical artifact
-from DM simulations), more realistic satellite distribution (doesn't trace host density towards center)
+from DM simulations), baryonic effects
 
 References:
 Han et al. (2016): https://academic.oup.com/mnras/article/457/2/1208/965286
@@ -29,6 +31,7 @@ Han et al. (2018): https://ui.adsabs.harvard.edu/abs/2018MNRAS.474..604H/abstrac
 Abe et al. (2025): https://arxiv.org/abs/2411.07509
 Gilman et al. (2019): https://arxiv.org/abs/1908.06983
 Zheng et al. (2025): https://arxiv.org/pdf/2501.00986
+Nadler et al (2023): https://ui.adsabs.harvard.edu/abs/2023ApJ...945..159N/abstract
 """
 
 import random
@@ -52,9 +55,9 @@ import math
 
 
 class GeneratedDeflector:
-    def __init__(self, M200h, z, cosmo, verbose=False):
+    def __init__(self, M200, z, cosmo, verbose=False):
         """
-        :param M200h: host halo mass (200c) in solar masses / h
+        :param M200h: host halo mass (200c) (physical)
         :param z: deflector redshift
         :param cosmo: astropy cosmology instance
         :param verbose: verbose
@@ -63,6 +66,8 @@ class GeneratedDeflector:
         self.verbose = verbose
 
         self.cosmo_col = set_colossus_cosmo(cosmo)
+
+        M200h = M200 * cosmo.h
 
         c = concentration.concentration(M200h, "200c", z, model="diemer19")
         c = np.random.lognormal(
@@ -94,7 +99,7 @@ class GeneratedDeflector:
         )
 
         if self.verbose:
-            print(f"M200: {np.log10(self.M200h):.4g}/h, z: {self.z:.4g}")
+            print(f"M200: {np.log10(self.M200h / self.cosmo.h):.4g} (physical), z: {self.z:.4g}")
             print(
                 f"R200: {self.R200h:.4g} kpc/h, projected {self.R200h / self.cosmo.h / self.angular_diameter_dist * 206265:.4g} arcsec"
             )
@@ -121,17 +126,29 @@ class GeneratedDeflector:
 
         return (a1 * mu**-al1 + a2 * mu**-al2) * np.exp(-b * mu**beta)
 
-    def _unevolved_spatial_distribution_pdf(self, r):
-        """Returns normalized dN / d3r as a function of radius, so the total
-        probability over the host halo is 1.
+    def _unevolved_spatial_distribution_pdf(self, r, m_acc):
+        """
+        Given an accretion mass, returns the evolved spatial distribution pdf with respect to r.
+        This was fit empirically from the Symphony simulations, figure 8
+        Han 2016 model places all subhalos tracing the host density, with massive satellites are more centrally concentrated
 
-        In the model, when selecting by accretion mass the final
-        position traces host halo density
-
-        :param r: distance to halo center [kpc / h]
+        r: distance to center [kpc / h]
+        m_acc_h: accretion subhalo mass [solar masses / h]
         """
 
-        return self.p_nfw.density(r) / self.M200h
+        mu = -np.log10(m_acc / self.M200h)
+        mu = np.clip(mu, 0, 3)
+
+        r_f = r / self.Rvirh
+        ln_rf = np.log(r_f)
+
+        A = 0.914 * (1 - np.exp(-1.55 * mu ** 1.433))
+        B = 0.4885 * (1 - np.exp(-1.96 * mu ** 0.667))
+
+        CDF = np.exp(A * ln_rf - B * ln_rf ** 2)
+        PDF = CDF / r * (A - 2 * B * ln_rf)
+
+        return PDF
 
     def _evolved_subhalo_mass_fraction_of_accretion(self, r):
         """Returns m_evolved / m_acc. Han 2016.
@@ -166,20 +183,24 @@ class GeneratedDeflector:
 
         r = self.R200h * np.linspace(0.001, 1, N_RADIUS)  # TODO splashback radius
 
-        d3r = 4 / 3 * np.pi * (r[1:] ** 3 - r[:-1] ** 3)
+        #d3r = 4 / 3 * np.pi * (r[1:] ** 3 - r[:-1] ** 3)
+        dr = r[1:] - r[:-1]
 
+        # spatial distribution depends on accretion mass
         spatial_distribution_multiplier = (
-            self._unevolved_spatial_distribution_pdf(r[:-1]) * d3r
+            self._unevolved_spatial_distribution_pdf(
+                r[:-1][None, :], m_acc[:, None]
+            ) * dr[None, :]
         )
 
-        # Expected number for each mass bin
+        # expected number for each mass bin
         dlnm = np.log(m_acc[1]) - np.log(m_acc[0])
         accreted_subhalo_expected = self._accreted_subhalo_density_pdf(m_acc) * dlnm
 
-        # Full (mass, radius) probability matrix
+        # full (mass, radius) probability matrix
         probability_present = (
             accreted_subhalo_expected[:, None]
-            * spatial_distribution_multiplier[None, :]
+            * spatial_distribution_multiplier
         )
 
         rng = np.random.default_rng()
@@ -542,8 +563,8 @@ class GeneratedDeflectorPopulation:
         verbose=False,
     ):
         """
-        :param Mmin: Minimum host halo mass (solar masses / h)
-        :param Mmax: Maximum host halo mass (solar masses / h)
+        :param Mmin: Minimum host halo mass (physical)
+        :param Mmax: Maximum host halo mass (physical)
         :param zmin: min redshift
         :param zmax: max redshift
         :param red_galaxies: list of red galaxies from skypy
@@ -572,7 +593,7 @@ class GeneratedDeflectorPopulation:
 
         cosmo_col = set_colossus_cosmo(cosmo)
 
-        MM_h = np.logspace(np.log10(Mmin), np.log10(Mmax), 1000)
+        MM_h = np.logspace(np.log10(Mmin * cosmo.h), np.log10(Mmax * cosmo.h), 1000)
         dlnm = np.log(MM_h[1]) - np.log(MM_h[0])
         sky_area_deg2 = sky_area.to_value("deg2")
 
@@ -585,9 +606,9 @@ class GeneratedDeflectorPopulation:
                 * dz
             )
 
-            for m, count in zip(MM_h, counts):
+            for m_h, count in zip(MM_h, counts):
                 if count > 0:
-                    self.deflectors += [(m, z)] * count
+                    self.deflectors += [(m_h / cosmo.h, z)] * count
 
     def draw_deflector(self, kwargs_host_mass=None):
         """Draw a random deflector.
@@ -603,7 +624,7 @@ class GeneratedDeflectorPopulation:
         M, z = random.choice(self.deflectors)
 
         if self.verbose:
-            print(f"Drew log10(M200h) {np.log10(M):.4f} z {z:.4f}")
+            print(f"Drew log10(M200) {np.log10(M):.4f} z {z:.4f}")
 
         generated_deflector = GeneratedDeflector(M, z, self.cosmo, verbose=self.verbose)
 

@@ -295,7 +295,7 @@ def sources_in_influence_area(
         cosmo,
         {
             "compute_window": np.sqrt(source_area.to_value("arcsec2") / np.pi) * 2,
-            "grid_scale": 0.5,
+            "grid_scale": 2,
         },
     )
 
@@ -311,9 +311,9 @@ def sources_in_influence_area(
             curve_path = Path(np.column_stack((ra, dec)))
 
             # skip tiny curves
-            area = (np.max(ra) - np.min(ra)) * (np.max(dec) - np.min(dec))
-            if area < 1:
-                continue
+            # area = (np.max(ra) - np.min(ra)) * (np.max(dec) - np.min(dec))
+            # if area < 1:
+            #     continue
 
             # source sits inside this caustic
             if curve_path.contains_point(point):

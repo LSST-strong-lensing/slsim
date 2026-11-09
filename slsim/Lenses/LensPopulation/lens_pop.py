@@ -8,9 +8,9 @@ from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 from slsim.LOS.los_pop import LOSPop
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
 from slsim.Lenses.LensPopulation.lensed_population_base import LensedPopulationBase
-from slsim.Deflectors.deflector_util import sources_in_influence_area
+from slsim.Lenses.arc_tracing import trace_finite_source_images, compute_LW_phi
 from tqdm import tqdm
-
+from slsim.Util.param_util import image_separation_from_positions
 
 class LensPop(LensedPopulationBase):
     """Class to perform samples of lens population."""
@@ -112,28 +112,31 @@ class LensPop(LensedPopulationBase):
         source_area,
         verbose=False,
         min_num_sources=1,
-        return_only_multiply_imaged_sources=False,
-        **kwargs_lens_cut
+        return_only_valid_sources=False,
+        min_image_separation=1,
+        min_num_images=1,
+        min_arc_length=None,
+        min_LW_ratio=0,
+        mag_per_arcsec2_cutoff=27,
+        mag_band="r"
     ):
-        """Draw a random lens with an entire source field spanning
-        `source_area`, with at least min_num_sources satisfying
-        kwargs_lens_cut.
+        """Draw a random lens with an entire source field spanning `source_area`, with at least min_num_sources satisfying the requirements. Can be used to find systems with either multiply imaged sources or with giant arcs.
+
+        To find systems with multiply images sources, min_num_images must be specified as well as optionally min_image_separation.
+
+        To find systems with giant arcs, min_arc_length must be specified as well as optionally min_LW_ratio.
 
         :param sky_area: Sky area to draw sources from
         :type sky_area: (astropy.units.Quantity)
-        :param kwargs_lens_cut: Dictionary of cuts that one wants to apply to the lens.
-                                Example: kwargs_lens_cut = {
-                                "min_image_separation": 0.5,
-                                "max_image_separation": 10,
-                                "mag_arc_limit": {"i": 24},
-                                "second_brightest_image_cut": {"i": 24}}.
-                                All these cuts are optional.
-        :type kwargs_lens_cut: dict
-        :param min_num_sources: Minimum number of lensed sources that must satisfy kwargs_lens_cut
+        :param min_num_sources: Minimum number of lensed sources that must satisfy requirements
         :type min_num_sources: int
-        :param return_only_multiply_imaged_sources: Return a lens class only with sources that are multiply imaged. Default False.
-        :type return_only_multiply_imaged_sources: bool
-        :param verbose: print statements added
+        :param min_image_separation: Minimum image separation in arcsecs for multiply lensed sources. min_num_images must be specified or this won't do anything.
+        :type min_image_separation: int
+        :param min_num_images: Minimum number of images for a source, default 1
+        :type min_num_images: int
+        :param return_only_valid_sources: Return a lens class only with sources satisfy the cuts. Default False.
+        :type return_only_valid_sources: bool
+        :param verbose: verbose
         :type verbose: bool
         :return: Lens() instance with parameters of the deflector and lens and source field.
         :rtype: Lens
@@ -149,35 +152,55 @@ class LensPop(LensedPopulationBase):
             # draw all sources, and filter onces near caustics for validity checking
             _source = self._sources.draw_galaxies(source_area)
 
-            _in_influence_area = sources_in_influence_area(
-                _deflector, _source, source_area, 10, 3, self.cosmo
-            )
-            _source_cut = [
-                s for s, in_area in zip(_source, _in_influence_area) if in_area
-            ]
-
-            if len(_source_cut) < min_num_sources:
-                continue
-
             # lens only with sources near caustics to speed up validity checking
             test_lens = Lens(
                 deflector_class=_deflector,
-                source_class=_source_cut,
+                source_class=_source,
                 cosmo=self.cosmo,
                 use_jax=self._use_jax,
                 multi_plane="Source",
                 create_field_galaxies=True,
             )
 
-            test_res = test_lens.validity_test(**kwargs_lens_cut)
-            if not isinstance(test_res, dict):
-                test_res = {0: test_res}
+            #Field galaxies removed
+            source = test_lens._source
 
-            if len([x for x in test_res.values() if x]) >= min_num_sources:
+            images = trace_finite_source_images(
+                lens=test_lens,
+                search_window=np.sqrt(source_area.to_value("arcsec2") / np.pi) * 2,
+                mag_per_arcsec2_cutoff=mag_per_arcsec2_cutoff,
+                mag_band=mag_band,
+                return_interior=True
+            )
+
+            valid = [True] * len(source)
+            for src in range(len(source)):
+                if len(images[src]) < min_num_images:
+                    valid[src] = False
+                    continue
+
+                if min_num_images > 1:
+                    image_centers = (
+                        np.array([np.mean(X) for X, _ in images[src]]),
+                        np.array([np.mean(Y) for _, Y in images[src]]),
+                    )
+                    if image_separation_from_positions(image_centers) < min_image_separation:
+                        valid[src] = False
+                        continue
+
+                if min_arc_length is not None:
+                    # at least one image has to be longer than min_arc_length and have a high enough LW ratio
+                    arc_info = [compute_LW_phi(image) for image in images[src]]
+
+                    if not any([a[0] > min_arc_length and a[0] / a[1] > min_LW_ratio for a in arc_info]):
+                        valid[src] = False
+                        continue
+
+            if len([x for x in valid if x]) >= min_num_sources:
                 if verbose is True:
                     print("selected lens after %s tries." % n)
 
-                if not return_only_multiply_imaged_sources:
+                if not return_only_valid_sources:
                     # final lens with all sources
                     return Lens(
                         deflector_class=_deflector,
@@ -192,9 +215,9 @@ class LensPop(LensedPopulationBase):
                     return Lens(
                         deflector_class=_deflector,
                         source_class=[
-                            _source_cut[i]
-                            for i in range(len(_source_cut))
-                            if test_res[i]
+                            _source[i]
+                            for i in range(len(_source))
+                            if valid[i]
                         ],
                         cosmo=self.cosmo,
                         use_jax=self._use_jax,
