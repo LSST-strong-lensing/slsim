@@ -118,9 +118,6 @@ class DeflectorKinematics:
         kwargs_light_amp = data_util.magnitude2amplitude(
             light_model, self.kwargs_light, magnitude_zero_point=0
         )
-        amp_norm = kwargs_light_amp[0]["amp"]
-        for kwargs in kwargs_light_amp:
-            kwargs["amp"] = kwargs["amp"] / amp_norm
 
         return self._light_mge(
             light_model,
