@@ -1,9 +1,9 @@
-"""
-This module predicts the stellar kinematics of a deflector with the axisymmetric Jeans
-Anisotropic Modelling (JAM) of JamPy, using the deflector's total (lensing) mass as the
-potential and its light as the tracer.
-This module is in active development.
-Currently, it only supports constant stellar orbit anisotropy, and Gaussian PSF.
+"""This module predicts the stellar kinematics of a deflector with the
+axisymmetric Jeans Anisotropic Modelling (JAM) of JamPy, using the deflector's
+total (lensing) mass as the potential and its light as the tracer.
+
+This module is in active development. Currently, it only supports
+constant stellar orbit anisotropy, and Gaussian PSF.
 """
 
 import copy
@@ -144,8 +144,8 @@ class DeflectorKinematics:
         :param n_r: number of radii of the fit
         :type n_r: int
         :return: surface mass density [M_sun/pc^2], dispersion along the
-            major axis [arcsec] and observed axis ratio of each Gaussian,
-            as model_pot_proj of jam_axi_proj
+            major axis [arcsec] and observed axis ratio of each
+            Gaussian, as model_pot_proj of jam_axi_proj
         """
         return self._mass_mge(
             self.lens_model_list,
