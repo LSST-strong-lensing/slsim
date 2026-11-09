@@ -118,6 +118,66 @@ class TestDeflector(object):
         assert pytest.approx(e1_mass, rel=1e-3) == self.kwargs_mass["e1"]
         assert pytest.approx(e2_mass, rel=1e-3) == self.kwargs_mass["e2"]
 
+    def test_composite_mass_ellipticity(self):
+        # single mass component: its own ellipticity
+        npt.assert_almost_equal(
+            self.deflector.composite_mass_ellipticity(self.lens_cosmo),
+            self.deflector.mass_ellipticity,
+        )
+        npt.assert_almost_equal(
+            self.deflector_her.composite_mass_ellipticity(self.lens_cosmo),
+            self.deflector_her.light_ellipticity,
+        )
+        npt.assert_almost_equal(
+            self.deflector_jaffe.composite_mass_ellipticity(self.lens_cosmo), (0, 0)
+        )
+
+        # aligned halo and stars: in between the two
+        kwargs_light = {
+            "extended_source_type": "single_sersic",
+            "n_sersic": 4,
+            "e1": 0.1,
+            "e2": 0,
+            "angular_size": 0.8,
+            "mag_g": 20.0,
+            "stellar_mass": 1e11,
+        }
+        kwargs_mass = {
+            "mass_type": "NFW_HERNQUIST",
+            "halo_mass": 10**13,
+            "concentration": 8,
+            "e1": 0.2,
+            "e2": 0,
+        }
+        deflector = Deflector(
+            z=0.5,
+            center_x=0.1,
+            center_y=-0.2,
+            kwargs_light=kwargs_light,
+            kwargs_mass=kwargs_mass,
+        )
+        e1, e2 = deflector.composite_mass_ellipticity(self.lens_cosmo)
+        assert 0.1 < e1 < 0.2
+        npt.assert_almost_equal(e2, 0, decimal=3)
+
+        # elliptical potential: the convergence is more elliptical
+        kwargs_pj = {
+            "mass_type": "PJAFFE",
+            "r_s": 2,
+            "r_a": 0.1,
+            "vel_disp": 200,
+            "e1": 0,
+            "e2": 0.1,
+        }
+        deflector = Deflector(
+            z=0.5, center_x=0, center_y=0, kwargs_light=None, kwargs_mass=kwargs_pj
+        )
+        e1, e2 = deflector.composite_mass_ellipticity(self.lens_cosmo, r_window=3)
+        npt.assert_almost_equal(e1, 0, decimal=3)
+        assert e2 > 0.1
+        with pytest.raises(ValueError):
+            deflector.composite_mass_ellipticity(self.lens_cosmo)
+
     def test_init(self):
         with npt.assert_raises(ValueError):
             Deflector(z=0.5, kwargs_mass={"mass_type": "WRONG"})
