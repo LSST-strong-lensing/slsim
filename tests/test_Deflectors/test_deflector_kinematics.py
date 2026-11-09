@@ -189,8 +189,9 @@ class TestDeflectorKinematics(object):
         }
         sigma_psf = 0.5 / (2 * np.sqrt(2 * np.log(2)))
         vrms_map = self.kinematics.vrms_map(sigma_psf=sigma_psf, **kwargs_bins)
-        xbin, ybin, _ = DeflectorKinematics.kinematic_grid(0.5, 0.25)
+        xbin, ybin, shape = DeflectorKinematics.kinematic_grid(0.5, 0.25)
         assert len(vrms_map["model"]) == 16
+        assert vrms_map["shape"] == shape == (4, 4)
         assert np.all(vrms_map["model"] > 0)
         npt.assert_allclose(vrms_map["xbin"], xbin)
         npt.assert_allclose(vrms_map["ybin"], ybin)
