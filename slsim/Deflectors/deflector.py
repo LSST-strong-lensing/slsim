@@ -1,5 +1,6 @@
 from lenstronomy.LightModel.light_model import LightModel
-from lenstronomy.Util import data_util
+from lenstronomy.LensModel.lens_model import LensModel
+from lenstronomy.Util import data_util, analysis_util, util
 from slsim.Util import param_util, lenstronomy_util
 import numpy as np
 import lenstronomy.Util.constants as constants
@@ -7,6 +8,19 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 from slsim.Sources.source import Source
 from slsim.Deflectors.mass import Mass
+
+# lenstronomy mass models whose e1/e2 (if any) describe the convergence itself
+_DENSITY_ELLIPTICITY_MODELS = [
+    "SIS",
+    "SIE",
+    "SPP",
+    "EPL",
+    "NFW",
+    "NFW_ELLIPSE_CSE",
+    "HERNQUIST",
+    "HERNQUIST_ELLIPSE_CSE",
+    "PJAFFE",
+]
 
 
 class Deflector(object):
@@ -183,6 +197,60 @@ class Deflector(object):
         :return: e1_mass, e2_mass
         """
         return self.mass.mass_ellipticity
+
+    def composite_mass_ellipticity(self, lens_cosmo, r_window=None, grid_num=200):
+        """Ellipticity of the total projected mass (convergence) of the
+        deflector.
+        Defined as:
+
+        .. math::
+            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
+            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
+
+        with q being the minor-to-major axis ratio, in the same convention as
+        mass_ellipticity and light_ellipticity.
+
+        For a single mass component that is spherical or has an elliptical
+        convergence, this is the ellipticity of that component. Otherwise (e.g.
+        several mass components, or an elliptical potential), it is measured from the
+        second moments of the total convergence within r_window.
+
+        :param lens_cosmo: lens cosmology model
+        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
+        :param r_window: half-size of the grid on which the moments are computed
+            [arcsec]. If None, uses 3 times the angular size of the light.
+        :type r_window: float or None
+        :param grid_num: number of grid points per side
+        :type grid_num: int
+        :return: e1_mass, e2_mass
+        """
+        lens_mass_model_list, kwargs_lens_mass = self.mass.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo, spherical=False
+        )
+        if (
+            len(lens_mass_model_list) == 1
+            and lens_mass_model_list[0] in _DENSITY_ELLIPTICITY_MODELS
+        ):
+            e1 = kwargs_lens_mass[0].get("e1", 0)
+            e2 = kwargs_lens_mass[0].get("e2", 0)
+        else:
+            if r_window is None:
+                r_window = 3 * self.angular_size_light
+            if not r_window > 0:
+                raise ValueError(
+                    f"r_window must be positive, got {r_window}. Provide r_window "
+                    "explicitly for a deflector without light."
+                )
+            center_x, center_y = self.deflector_center
+            x_grid, y_grid = util.make_grid(
+                num_pix=grid_num, delta_pix=2 * r_window / grid_num
+            )
+            kappa = LensModel(lens_model_list=lens_mass_model_list).kappa(
+                x_grid + center_x, y_grid + center_y, kwargs_lens_mass
+            )
+            e1, e2 = analysis_util.ellipticities(kappa, x_grid, y_grid, iterative=True)
+        # convert from lenstronomy to slsim convention.
+        return param_util.ellipticity_slsim_to_lenstronomy(e1_slsim=e1, e2_slsim=e2)
 
     def mass_model_lenstronomy(self, lens_cosmo, spherical=False):
         """Returns lens model instance and parameters in lenstronomy
