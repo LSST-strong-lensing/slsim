@@ -3,6 +3,7 @@ import numpy as np
 from numpy import testing as npt
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
+from lenstronomy.Data.coord_transforms import Coordinates
 from slsim.Lenses.lens import Lens
 from slsim.Deflectors import deflector_util
 from slsim.ImageSimulation.image_simulation import (
@@ -320,6 +321,25 @@ def test_centered_coordinate_system():
     npt.assert_almost_equal(grid["ra_at_xy_0"], -10, decimal=10)
     npt.assert_almost_equal(grid["dec_at_xy_0"], -10, decimal=10)
     assert np.shape(grid["transform_pix2angle"]) == np.shape(transform_matrix)
+
+
+def test_centered_coordinate_system_rotated():
+    # non-symmetric (rotated) pixel-to-angle transform: the central pixel must
+    # still map to (0, 0) under lenstronomy's coordinate convention
+    delta_pix, num_pix, angle = 0.1, 61, np.deg2rad(30)
+    rotation = np.array(
+        [[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]
+    )
+    transform_matrix = delta_pix * rotation
+    grid = centered_coordinate_system(num_pix, transform_pix2angle=transform_matrix)
+    coords = Coordinates(transform_matrix, grid["ra_at_xy_0"], grid["dec_at_xy_0"])
+    pix_center = (num_pix - 1) / 2
+    ra, dec = coords.map_pix2coord(pix_center, pix_center)
+    npt.assert_almost_equal(ra, 0, decimal=10)
+    npt.assert_almost_equal(dec, 0, decimal=10)
+    x, y = coords.map_coord2pix(0, 0)
+    npt.assert_almost_equal(x, pix_center, decimal=10)
+    npt.assert_almost_equal(y, pix_center, decimal=10)
 
 
 def test_image_data_class(pes_lens_instance):
