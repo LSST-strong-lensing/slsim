@@ -583,6 +583,7 @@ def test_lens_image_series_caches_static_component(
 
     assert len(calls) == 1
 
+    # A different pixel scale must trigger a cache miss.
     calls.clear()
     n = 2
     lens_image_series(
