@@ -11,6 +11,7 @@ from slsim.Util.param_util import (
     pixels_to_images,
     random_radec_string,
     transformmatrix_to_pixelscale,
+    zero_point_scale,
     magnitude_to_amplitude,
     amplitude_to_magnitude,
     ellipticity_slsim_to_lenstronomy,
@@ -163,6 +164,11 @@ def test_transformmatrix_to_pixelscale():
     expected_result = np.sqrt(6)
 
     assert result == expected_result
+
+
+def test_zero_point_scale():
+    npt.assert_allclose(zero_point_scale(30, 27), 10**1.2)
+    npt.assert_allclose(zero_point_scale(27, 27), 1.0)
 
 
 def test_amplitude_to_magnitude():
