@@ -14,11 +14,13 @@ import lenstronomy.Util.constants as constants
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
-from lenstronomy.Util import data_util
+from lenstronomy.Util import data_util, util
 from lenstronomy.Util.param_util import ellipticity2phi_q
 
 import mgefit
 from jampy.axi.jam_axi_proj import jam_axi_proj
+
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 # position angle difference [deg] between light and mass above which JAM's assumption of
 # a common symmetry axis is flagged
@@ -66,7 +68,14 @@ class DeflectorKinematics:
             )
         self.light_model_list = light_model_list
         self.kwargs_light = kwargs_light
-        phi_light, self.q_light = ellipticity2phi_q(*deflector_class.light_ellipticity)
+
+        e1_light, e2_light = deflector_class.light_ellipticity
+        phi_light, self.q_light = ellipticity2phi_q(e1=e1_light, e2=e2_light)
+        # light position angle in the lenstronomy (image) frame [rad], counterclockwise
+        # from +x, to rotate V_rms maps into the sky frame
+        self._phi_light_sky, _ = ellipticity2phi_q(
+            *ellipticity_slsim_to_lenstronomy(e1_slsim=e1_light, e2_slsim=e2_light)
+        )
 
         # initialize lenstronomy.Cosmo.LensCosmo
         lens_cosmo = LensCosmo(
@@ -85,6 +94,7 @@ class DeflectorKinematics:
         delta_phi = np.degrees((phi_light - phi_mass + np.pi / 2) % np.pi - np.pi / 2)
         if abs(delta_phi) > _MISALIGNMENT_WARNING_DEG:
             warnings.warn(
+                f"Axis ratios: q_light={self.q_light:.3f}, q_mass={self.q_mass:.3f}. "
                 f"Position angles of light and mass differ by {delta_phi:.1f} deg. "
                 "JAM assumes a common symmetry axis; the difference is ignored.",
                 category=UserWarning,
@@ -187,14 +197,17 @@ class DeflectorKinematics:
         norm_psf=1.0,
         kwargs_mge_light=None,
         kwargs_mge_mass=None,
+        dimensionless=False,
+        frame="galaxy",
         **kwargs_jam_axi_proj,
     ):
-        """V_rms map from jampy's jam_axi_proj (moment='zz') in the frame of
-        the deflector's major axis, centered on the deflector.
+        """V_rms map from jampy's jam_axi_proj (moment='zz'), or the map of
+        the dimensionless kinematics J, centered on the deflector.
 
         The map is evaluated on a square grid of bins from
-        DeflectorKinematics.kinematic_grid. The other arguments are those
-        of jam_axi_proj, except kwargs_mge_light and kwargs_mge_mass.
+        DeflectorKinematics.kinematic_grid in the frame of the deflector's
+        major axis, if frame="galaxy". If frame="sky", the bins are then
+        rotated into the frame of the lenstronomy (image) coordinates.
 
         :param map_half_size: half size of the map [arcsec]
         :param grid_size: size of each bin of the map [arcsec]
@@ -220,15 +233,40 @@ class DeflectorKinematics:
         :param kwargs_mge_mass: keyword arguments of mass_mge; if None,
             its defaults
         :type kwargs_mge_mass: dict or None
+        :param dimensionless: if True, "model" is the dimensionless
+            kinematics J = V_rms^2 D_ds / (D_s c^2) (see vrms_to_J) instead
+            of V_rms [km/s], with D_ds and D_s from z_source and the
+            cosmology of the class
+        :type dimensionless: bool
+        :param frame: frame of the returned bins. "galaxy": x along the
+            projected major axis of the light. "sky": axes of the
+            lenstronomy (image) coordinates, i.e. the galaxy frame rotated
+            counterclockwise by the light position angle.
+        :type frame: str
         :param kwargs_jam_axi_proj: other keyword arguments of
             jam_axi_proj (e.g. nrad, nang, step); plot and quiet default
             to False and True. The MGEs, mbh, distance and moment are set
             by this class.
         :return: dictionary with "xbin", "ybin" [arcsec] (1d arrays of
-            the bin centers), "model" (V_rms [km/s]), "flux" (PSF convolved
-            model surface brightness, arbitrary units) and "shape" (2d shape
-            of the map, to reshape the 1d arrays)
+            the bin centers in the given frame, relative to the deflector
+            center), "model" (V_rms [km/s], or J if dimensionless), "flux"
+            (PSF convolved model surface brightness, arbitrary units),
+            "shape" (2d shape of the map, to reshape the 1d arrays),
+            "dimensionless" (whether "model" is dimensionless J), "dds" and "ds" (angular
+            diameter distances deflector-source and observer-source [Mpc],
+            to convert "model" with vrms_to_J or J_to_vrms), "frame" and
+            "pa_light_sky"
+            (position angle of the light in the sky frame [rad],
+            counterclockwise from +x, in the lenstronomy convention;
+            util.rotate(xbin, ybin, pa_light_sky) converts sky-frame bins to
+            the galaxy frame and util.rotate(xbin, ybin, -pa_light_sky)
+            galaxy-frame bins to the sky frame, with util from
+            lenstronomy.Util)
         """
+        if frame not in ("galaxy", "sky"):
+            raise ValueError(
+                f"frame {frame} not supported. Choose among ['galaxy', 'sky']."
+            )
 
         # make kinematic grid of bin centers
         xbin, ybin, shape = self.kinematic_grid(map_half_size, grid_size)
@@ -273,39 +311,70 @@ class DeflectorKinematics:
             **kwargs_jam_axi_proj,
         )
 
+        if dimensionless:
+            # convert V_rms [km/s] to dimensionless kinematics J = V_rms^2 D_ds / (D_s c^2)
+            jam.model = self.vrms_to_J(
+                vrms=jam.model, dds=self._lens_cosmo.dds, ds=self._lens_cosmo.ds
+            )
+
+        xbin, ybin = jam.xbin, jam.ybin
+        if frame == "sky":
+            # util.rotate rotates the coordinate axes counterclockwise by the angle,
+            # i.e. the points clockwise; -phi rotates the points counterclockwise
+            # by phi, from the major axis frame into the sky frame
+            xbin, ybin = util.rotate(xbin, ybin, -self._phi_light_sky)
+
         return {
-            "xbin": jam.xbin,
-            "ybin": jam.ybin,
+            "xbin": xbin,
+            "ybin": ybin,
             "model": jam.model,
             "flux": jam.flux,
             "shape": shape,
+            "dimensionless": dimensionless,
+            "dds": self._lens_cosmo.dds,
+            "ds": self._lens_cosmo.ds,
+            "frame": frame,
+            "pa_light_sky": self._phi_light_sky,
         }
 
     def vrms_aperture(
-        self, aperture_type="circular", kwargs_aperture=None, **kwargs_vrms_map
+        self,
+        vrms_map_dict,
+        aperture_type="circular",
+        kwargs_aperture=None,
     ):
-        """Flux-weighted V_rms within an aperture.
+        """Flux-weighted V_rms (or J) of a map from vrms_map within an
+        aperture centered on the deflector.
 
+        The aperture is a circle or an annulus around (0, 0), so the
+        result is the same for maps in the "galaxy" and "sky" frames.
+
+        :param vrms_map_dict: output of vrms_map
+        :type vrms_map_dict: dict
         :param aperture_type: "circular" with kwargs_aperture={"radius":
             r} or "annulus" with kwargs_aperture={"r_in": r_in, "r_out":
             r_out}
         :type aperture_type: str
-        :param kwargs_aperture: aperture size [arcsec]; if None, a
-            circular aperture of the half-light radius
-        :type kwargs_aperture: dict or None
-        :param kwargs_vrms_map: keyword arguments of vrms_map
-        :return: V_rms within the aperture [km/s]
+        :param kwargs_aperture: aperture size [arcsec], in the format of
+            aperture_type; a ValueError is raised otherwise
+        :type kwargs_aperture: dict
+        :return: V_rms within the aperture [km/s], or J within the
+            aperture if vrms_map_dict["dimensionless"] is True; nan, with a
+            warning, if no bin of the map is within the aperture
         """
-        if kwargs_aperture is None:
-            kwargs_aperture = {"radius": self._r_eff}
-        vrms_map = self.vrms_map(**kwargs_vrms_map)
-        return self.flux_weighted_vrms(
-            vrms_map["model"],
-            vrms_map["flux"],
-            vrms_map["xbin"],
-            vrms_map["ybin"],
+
+        mask = self._make_mask(
+            xbin=vrms_map_dict["xbin"],
+            ybin=vrms_map_dict["ybin"],
             aperture_type=aperture_type,
             kwargs_aperture=kwargs_aperture,
+        )
+
+        return self.flux_weighted_model(
+            model=vrms_map_dict["model"],
+            dimensionless_model=vrms_map_dict["dimensionless"],
+            flux=vrms_map_dict["flux"],
+            mask=mask,
         )
 
     @staticmethod
@@ -461,37 +530,74 @@ class DeflectorKinematics:
         return x_grid.ravel(), y_grid.ravel(), x_grid.shape
 
     @staticmethod
-    def flux_weighted_vrms(
-        vrms, flux, xbin, ybin, aperture_type="circular", kwargs_aperture=None
-    ):
-        """Flux-weighted V_rms within an aperture, sqrt(sum(flux * vrms^2) /
-        sum(flux)).
+    def _make_mask(xbin, ybin, aperture_type, kwargs_aperture):
+        """Mask of bins within an aperture centered on (0, 0).
 
-        :param vrms: V_rms of each bin [km/s]
-        :param flux: flux of each bin
         :param xbin: x of each bin [arcsec]
         :param ybin: y of each bin [arcsec]
         :param aperture_type: "circular" with kwargs_aperture={"radius":
             r} or "annulus" with kwargs_aperture={"r_in": r_in, "r_out":
             r_out}
         :type aperture_type: str
-        :param kwargs_aperture: aperture size [arcsec]
+        :param kwargs_aperture: aperture size [arcsec]; radius > 0, or
+            0 <= r_in < r_out
         :type kwargs_aperture: dict
-        :return: V_rms within the aperture [km/s]
+        :return: boolean mask of bins within the aperture
         """
-        r2 = xbin**2 + ybin**2
-        if aperture_type == "circular":
-            mask = r2 <= kwargs_aperture["radius"] ** 2
-        elif aperture_type == "annulus":
-            mask = (r2 >= kwargs_aperture["r_in"] ** 2) & (
-                r2 <= kwargs_aperture["r_out"] ** 2
-            )
-        else:
+        required_keys = {"circular": {"radius"}, "annulus": {"r_in", "r_out"}}
+        if aperture_type not in required_keys:
             raise ValueError(
                 f"aperture_type {aperture_type} not supported. Choose among "
-                "['circular', 'annulus']."
+                f"{list(required_keys)}."
             )
-        return np.sqrt(np.sum(flux[mask] * vrms[mask] ** 2) / np.sum(flux[mask]))
+        keys = required_keys[aperture_type]
+        if not isinstance(kwargs_aperture, dict) or set(kwargs_aperture) != keys:
+            raise ValueError(
+                f"kwargs_aperture={kwargs_aperture} is not valid for aperture_type "
+                f"{aperture_type}; it must be a dict with keys {sorted(keys)}."
+            )
+
+        r2 = xbin**2 + ybin**2
+        if aperture_type == "circular":
+            radius = kwargs_aperture["radius"]
+            if not radius > 0:
+                raise ValueError(f"radius={radius} must be positive.")
+            return r2 <= radius**2
+        r_in, r_out = kwargs_aperture["r_in"], kwargs_aperture["r_out"]
+        if not 0 <= r_in < r_out:
+            raise ValueError(
+                f"r_in={r_in} and r_out={r_out} must be 0 <= r_in < r_out."
+            )
+        return (r2 >= r_in**2) & (r2 <= r_out**2)
+
+    @staticmethod
+    def flux_weighted_model(model, dimensionless_model, flux, mask):
+        """Flux-weighted V_rms or J of the bins within an aperture.
+
+        V_rms: sqrt(sum(flux * V_rms^2) / sum(flux)). J, which is
+        proportional to V_rms^2: sum(flux * J) / sum(flux), i.e. J of the
+        flux-weighted V_rms.
+
+        :param model: V_rms [km/s] or J of each bin
+        :param dimensionless_model: True if model is J, False if V_rms
+        :type dimensionless_model: bool
+        :param flux: flux of each bin
+        :param mask: boolean mask of bins within the aperture
+        :return: V_rms within the aperture [km/s] or J within the aperture;
+            nan, with a warning, if mask selects no bin
+        """
+        if not np.any(mask):
+            warnings.warn(
+                "No bin of the map is within the aperture; returning nan. Use a "
+                "larger aperture or a finer grid.",
+                category=UserWarning,
+                stacklevel=2,
+            )
+            return np.nan
+        flux, model = flux[mask], model[mask]
+        if dimensionless_model:
+            return np.sum(flux * model) / np.sum(flux)
+        return np.sqrt(np.sum(flux * model**2) / np.sum(flux))
 
     @staticmethod
     def vrms_to_J(vrms, dds, ds):
