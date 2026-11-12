@@ -67,10 +67,10 @@ def get_sncosmo_bandpass(band):
             raise ValueError(f"Band '{band}' is not recognized by sncosmo.") from exc
     try:
         return sncosmo.get_bandpass(sncosmo_name)
-    except (ValueError, KeyError):
+    except Exception:
         filter_response = get_speclite_filter(band)
         bandpass = sncosmo.Bandpass(
-            filter_response.wavelength.to_value("Angstrom"),
+            filter_response.wavelength,
             filter_response.response,
             wave_unit="Angstrom",
             name=band,
