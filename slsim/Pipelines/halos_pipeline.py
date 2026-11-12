@@ -1,8 +1,8 @@
 import os
 from skypy.pipeline import Pipeline
-import slsim
 import tempfile
 import slsim.Util.param_util as util
+from slsim.Util.data_path import data_path
 
 
 class HalosSkyPyPipeline:
@@ -42,10 +42,8 @@ class HalosSkyPyPipeline:
             in Cosmology setting.
         """
 
-        path = os.path.dirname(slsim.__file__)
-        module_path, _ = os.path.split(path)
         if skypy_config is None:
-            skypy_config = os.path.join(module_path, "data/SkyPy/halo.yml")
+            skypy_config = data_path("SkyPy", "halo.yml")
 
         if (
             sky_area is None

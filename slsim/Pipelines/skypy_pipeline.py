@@ -2,6 +2,7 @@ import os
 from skypy.pipeline import Pipeline
 import tempfile
 import slsim.Util.param_util as util
+from slsim.Util.data_path import data_path
 import astropy.units as u
 import numpy as np
 from skypy.galaxies.spectrum import KCorrectTemplates
@@ -21,7 +22,7 @@ class SkyPyPipeline:
     ):
         """
         :param skypy_config: path to SkyPy configuration yaml file.
-                            If None, uses 'data/SkyPy/lsst-like.yml'.
+                            If None, uses 'slsim/data/SkyPy/lsst-like.yml'.
         :type skypy_config: string or None
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled.
@@ -39,17 +40,10 @@ class SkyPyPipeline:
          slsim.Pipelines.skypy_pipeline.kcorrect are not limited by this.
         :type z_max: float or None
         """
-        # path = os.path.dirname(slsim.__file__)
-
-        path = os.path.dirname(os.path.abspath(__file__))
-        path, _ = os.path.split(path)
-        module_path, _ = os.path.split(path)
         if skypy_config is None:
-            skypy_config = os.path.join(
-                module_path, "data/SkyPy/lsst-like_triple_SF.yml"
-            )
+            skypy_config = data_path("SkyPy", "lsst-like_triple_SF.yml")
         elif skypy_config == "lsst_like_old":
-            skypy_config = os.path.join(module_path, "data/SkyPy/lsst-like.yml")
+            skypy_config = data_path("SkyPy", "lsst-like.yml")
         else:
             skypy_config = skypy_config
 

@@ -3,6 +3,8 @@ import numpy as np
 import os
 import warnings
 
+from slsim.Util.data_path import data_path
+
 
 class LineOfSightDistribution:
     """Class to read the joint and no nonlinear distributions from the H5
@@ -25,24 +27,15 @@ class LineOfSightDistribution:
         :param no_correction_path: Path to the
             'kg_distributions_nolos.h5' file.
         """
-        current_script_path = os.path.abspath(__file__)
-        current_directory = os.path.dirname(current_script_path)
-        parent_directory = os.path.dirname(current_directory)
-        parent_parent = os.path.dirname(os.path.dirname(parent_directory))
-
         if nonlinear_correction_path is None:
-            file_path_joint = os.path.join(
-                parent_parent, "data/glass/joint_distributions.h5"
-            )
+            file_path_joint = data_path("glass", "joint_distributions.h5")
             if os.path.exists(file_path_joint):
                 nonlinear_correction_path = file_path_joint
             else:
                 nonlinear_correction_path = None
 
         if no_correction_path is None:
-            file_path_no_nonlinear = os.path.join(
-                parent_parent, "data/glass/no_nonlinear_distributions.h5"
-            )
+            file_path_no_nonlinear = data_path("glass", "no_nonlinear_distributions.h5")
             if os.path.exists(file_path_no_nonlinear):
                 no_correction_path = file_path_no_nonlinear
             else:
