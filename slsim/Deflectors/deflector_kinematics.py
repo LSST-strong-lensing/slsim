@@ -201,8 +201,8 @@ class DeflectorKinematics:
         frame="galaxy",
         **kwargs_jam_axi_proj,
     ):
-        """V_rms map from jampy's jam_axi_proj (moment='zz'), or the map of
-        the dimensionless kinematics J, centered on the deflector.
+        """V_rms map from jampy's jam_axi_proj (moment='zz'), or the map of the
+        dimensionless kinematics J, centered on the deflector.
 
         The map is evaluated on a square grid of bins from
         DeflectorKinematics.kinematic_grid in the frame of the deflector's
@@ -343,8 +343,8 @@ class DeflectorKinematics:
         aperture_type="circular",
         kwargs_aperture=None,
     ):
-        """Flux-weighted V_rms (or J) of a map from vrms_map within an
-        aperture centered on the deflector.
+        """Flux-weighted V_rms (or J) of a map from vrms_map within an aperture
+        centered on the deflector.
 
         The aperture is a circle or an annulus around (0, 0), so the
         result is the same for maps in the "galaxy" and "sky" frames.
@@ -359,8 +359,8 @@ class DeflectorKinematics:
             aperture_type; a ValueError is raised otherwise
         :type kwargs_aperture: dict
         :return: V_rms within the aperture [km/s], or J within the
-            aperture if vrms_map_dict["dimensionless"] is True; nan, with a
-            warning, if no bin of the map is within the aperture
+            aperture if vrms_map_dict["dimensionless"] is True; nan,
+            with a warning, if no bin of the map is within the aperture
         """
 
         mask = self._make_mask(
@@ -539,8 +539,8 @@ class DeflectorKinematics:
             r} or "annulus" with kwargs_aperture={"r_in": r_in, "r_out":
             r_out}
         :type aperture_type: str
-        :param kwargs_aperture: aperture size [arcsec]; radius > 0, or
-            0 <= r_in < r_out
+        :param kwargs_aperture: aperture size [arcsec]; radius > 0, or 0
+            <= r_in < r_out
         :type kwargs_aperture: dict
         :return: boolean mask of bins within the aperture
         """
