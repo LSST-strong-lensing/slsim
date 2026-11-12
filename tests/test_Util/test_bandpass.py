@@ -1,5 +1,6 @@
 import pytest
 
+import slsim.Util.bandpass as bandpass_module
 from slsim.ImageSimulation.image_quality_lenstronomy import register_observatory
 from slsim.Util.bandpass import get_sncosmo_bandpass, get_speclite_filter
 
@@ -49,3 +50,39 @@ def test_get_speclite_filter_resolves_bands():
     assert get_speclite_filter("lsst2023-i").name == "lsst2023-i"
     filter_response = get_speclite_filter("i")
     assert get_speclite_filter(filter_response) is filter_response
+
+
+def test_get_speclite_filter_retries_after_registering_filters(monkeypatch):
+    calls = []
+    original_load_filter = bandpass_module.speclite.filters.load_filter
+
+    def fake_load_filter(name):
+        calls.append(name)
+        if len(calls) == 1:
+            raise ValueError("force fallback")
+        return original_load_filter("lsst2023-i")
+
+    monkeypatch.setattr(
+        bandpass_module.speclite.filters, "load_filter", fake_load_filter
+    )
+    monkeypatch.setattr(
+        bandpass_module,
+        "_configure_roman_filters_if_needed",
+        lambda name: calls.append("configure"),
+    )
+
+    assert get_speclite_filter("F062").name == "lsst2023-i"
+    assert calls == ["Roman-F062", "configure", "Roman-F062"]
+
+
+def test_configure_roman_filters_if_needed(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        "slsim.Pipelines.roman_speclite.configure_roman_filters",
+        lambda: calls.append("configured"),
+    )
+
+    bandpass_module._configure_roman_filters_if_needed("Roman-F062")
+    bandpass_module._configure_roman_filters_if_needed("lsst2023-i")
+
+    assert calls == ["configured"]
