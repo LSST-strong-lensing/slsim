@@ -1,4 +1,5 @@
 ﻿from slsim.Pipelines.skypy_pipeline import SkyPyPipeline, kcorrect
+from slsim.Util.data_path import data_path
 from skypy.galaxies.spectrum import kcorrect as skypy_kcorrect
 from astropy.cosmology import (
     LambdaCDM,
@@ -123,9 +124,7 @@ def test_euclid_roman_lsst_config_full_redshift_range():
     configure_roman_filters()
     speclite.filters.load_filters(*filter_names())
 
-    path = os.path.dirname(os.path.abspath(__file__))
-    module_path = os.path.dirname(os.path.dirname(path))
-    skypy_config = os.path.join(module_path, "data/SkyPy/euclid-roman-lsst-like.yml")
+    skypy_config = data_path("SkyPy", "euclid-roman-lsst-like.yml")
     pipeline = SkyPyPipeline(
         skypy_config=skypy_config,
         sky_area=u.Quantity(0.001, "deg2"),

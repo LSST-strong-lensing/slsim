@@ -1,15 +1,11 @@
 from slsim.LOS.los_pop import LOSPop
-import os
+from slsim.Util.data_path import data_path
 from astropy.cosmology import FlatLambdaCDM
 import pytest
 
-path = os.path.dirname(__file__)
-module_path, _ = os.path.split(path)
-mother_path = os.path.dirname(os.path.dirname(path))
-
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
-path_to_h5 = os.path.join(mother_path, "data/glass/no_nonlinear_distributions.h5")
+path_to_h5 = data_path("glass", "no_nonlinear_distributions.h5")
 
 
 def test_default_settings():

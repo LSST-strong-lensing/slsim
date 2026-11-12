@@ -1,12 +1,11 @@
 import numpy as np
-import os
 from astropy.table import Table, hstack
 from colossus.cosmology import cosmology
 from colossus.halo import mass_defs
 import slsim.Deflectors.MassLightConnection.galaxy_population as galaxy_population
-import slsim
 import slsim.Halos.halo_population as halo_population
 import slsim.Util.param_util as util
+from slsim.Util.data_path import data_path
 import tempfile
 from skypy.pipeline import Pipeline
 
@@ -52,8 +51,6 @@ class SLHammocksPipeline:
         :param loghm_min: minimum halo mass in log unit
         :param loghm_max: maximum halo mass in log unit
         """
-        path = os.path.dirname(slsim.__file__)
-        module_path, _ = os.path.split(path)
         if slhammocks_config is not None:
             table = Table.read(slhammocks_config, format="csv")
             table = table_translator_for_slsim(table, cosmo)
@@ -113,7 +110,7 @@ class SLHammocksPipeline:
 
         # load SkyPy configuration
         if skypy_config is None:
-            skypy_config = os.path.join(module_path, "data/SkyPy/slhammock_skypy.yml")
+            skypy_config = data_path("SkyPy", "slhammock_skypy.yml")
         with open(skypy_config, "r") as file:
             content = file.read()
 
