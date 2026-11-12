@@ -3,6 +3,7 @@ __author__ = "Paras Sharma"
 import numpy as np
 from scipy.interpolate import interp1d
 from slsim.Microlensing.source_morphology.source_morphology import SourceMorphology
+from slsim.Util.bandpass import get_sncosmo_bandpass
 import slsim.ImageSimulation.image_quality_lenstronomy as iql
 
 
@@ -107,9 +108,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
             self._sn_model = sncosmo.Model(source=self.sn_model_name)
 
         try:
-            self._bandpass = sncosmo.get_bandpass(self.band)
-        except Exception:
-            raise ValueError(f"Band {self.band} not recognized by sncosmo.")
+            self._bandpass = get_sncosmo_bandpass(self.band)
+        except (ValueError, KeyError) as exc:
+            raise ValueError(f"Band {self.band} not recognized by sncosmo.") from exc
 
         # Generate the analytical anchors automatically
         min_t = self._sn_model.mintime()

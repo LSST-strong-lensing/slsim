@@ -14,9 +14,7 @@ from slsim.Util.astro_util import (
 from slsim.Sources.SourceVariability.light_curve_interpolation import (
     LightCurveInterpolation,
 )
-from speclite.filters import (
-    load_filter,
-)
+from slsim.Util.bandpass import get_speclite_filter
 from slsim.Util.param_util import (
     magnitude_to_amplitude,
     amplitude_to_magnitude,
@@ -315,10 +313,10 @@ class AccretionDiskReprocessing(object):
         :param bands: Float representing a speclite filter
         :param wavelengths: Float representing wavlength in nm.
         """
-        if isinstance(known_band, str):
-            filter_response = load_filter(known_band)
-        else:
-            raise ValueError("only speclite filters are implimented")
+        try:
+            filter_response = get_speclite_filter(known_band)
+        except TypeError as exc:
+            raise ValueError("only speclite filters are implimented") from exc
 
         effective_wavelength = (filter_response.effective_wavelength).to(u.nm)
         source_plane_wavelength = effective_wavelength / (1 + redshift)
@@ -338,9 +336,9 @@ class AccretionDiskReprocessing(object):
         # normalize flux
         flux_adjustment_ratio = source_plane_flux / theoretical_flux
         if band is not None:
-            band_wavelength = (load_filter(band).effective_wavelength).to(u.nm) / (
-                1 + redshift
-            )
+            band_wavelength = (get_speclite_filter(band).effective_wavelength).to(
+                u.nm
+            ) / (1 + redshift)
             cur_theoretical_flux = (
                 calculate_accretion_disk_emission(
                     self.kwargs_model["r_out"],
