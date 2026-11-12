@@ -4,8 +4,8 @@ import pathlib
 
 import numpy as np
 import matplotlib.pyplot as plt
-import slsim
 import slsim.Pipelines as pipelines
+from slsim.Util.data_path import data_path
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.Deflectors.DeflectorPopulation.galaxy_deflectors import GalaxyDeflectors
 
@@ -77,9 +77,7 @@ def gg_roman_lens_pop_instance():
         roman_filters[7],
     )
 
-    path = os.path.dirname(slsim.__file__)
-    module_path, _ = os.path.split(path)
-    skypy_config = os.path.join(module_path, "data/SkyPy/roman-like.yml")
+    skypy_config = data_path("SkyPy", "roman-like.yml")
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.001, unit="deg2")

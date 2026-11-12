@@ -5,7 +5,7 @@ import os
 from astropy import units as u
 import speclite.filters
 
-import slsim
+from slsim.Util.data_path import data_path
 
 _filter_name_list = [
     "F062",
@@ -27,11 +27,9 @@ def filter_names():
 
     :return: list of filter names with full path
     """
-    path = os.path.dirname(slsim.__file__)
-    module_path, _ = os.path.split(path)
-    save_path = os.path.join(module_path, "data/Filters/Roman/")
+    save_path = data_path("Filters", "Roman")
     _filter_names = [
-        str(save_path + "Roman-" + name + ".ecsv") for name in _filter_name_list
+        os.path.join(save_path, "Roman-" + name + ".ecsv") for name in _filter_name_list
     ]
     return _filter_names
 
@@ -41,12 +39,10 @@ def configure_roman_filters():
 
     :return: Roman filters stored and accessible in speclite
     """
-    path = os.path.dirname(slsim.__file__)
-    module_path, _ = os.path.split(path)
-    file_name_roman = os.path.join(
-        module_path, "data/Filters/Roman/Roman_effarea_20201130.csv"
+    file_name_roman = data_path(
+        "Filters", "Roman", "Roman_effarea_20201130.csv"
     )  # read the file
-    save_path = os.path.join(module_path, "data/Filters/Roman/")
+    save_path = data_path("Filters", "Roman")
 
     responses = {
         "F062": [],

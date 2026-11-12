@@ -5,10 +5,10 @@ from colossus.cosmology import cosmology as colossus_cosmo
 from slsim.Deflectors.DeflectorPopulation.cluster_deflectors import ClusterDeflectors
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
+from slsim.Util.data_path import data_path
 from astropy.units import Quantity
 from astropy.table import Table
 import pytest
-import os
 
 
 class TestClusterDeflector:
@@ -30,13 +30,11 @@ class TestClusterDeflector:
             catalog_type="skypy",
         )
 
-        path = os.path.dirname(__file__)
-        module_path = os.path.dirname(os.path.dirname(os.path.dirname(path)))
         self.cluster_catalog = Table.read(
-            os.path.join(module_path, "data/redMaPPer/clusters_example.fits")
+            data_path("redMaPPer", "clusters_example.fits")
         )
         self.members_catalog = Table.read(
-            os.path.join(module_path, "data/redMaPPer/members_example.fits")
+            data_path("redMaPPer", "members_example.fits")
         )
 
         self.cluster_pop = ClusterDeflectors(

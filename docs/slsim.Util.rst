@@ -52,6 +52,14 @@ slsim.Util.cosmo\_util module
    :undoc-members:
    :show-inheritance:
 
+slsim.Util.data\_path module
+----------------------------
+
+.. automodule:: slsim.Util.data_path
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 slsim.Util.k\_correction module
 -------------------------------
 

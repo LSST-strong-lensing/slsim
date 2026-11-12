@@ -3,21 +3,17 @@ from astropy.cosmology import LambdaCDM
 from astropy.cosmology import w0waCDM
 
 from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
+from slsim.Util.data_path import data_path
 
 
 class TestSkyPyPipeline(object):
     def setup_method(self):
-        import os
-
         from astropy.units import Quantity
 
         self.sky_area = Quantity(value=0.001, unit="deg2")
         self.cosmo = LambdaCDM(H0=70, Om0=0.3, Ob0=0.05, Ode0=0.7, Tcmb0=2.725)
-        current_dir = os.path.dirname(__file__)
-        self.slhammocks_config = os.path.join(
-            current_dir,
-            "../../data/SL-Hammocks",
-            "pop_salp_a0001_zl001_to_5_wo_sub.csv",
+        self.slhammocks_config = data_path(
+            "SL-Hammocks", "pop_salp_a0001_zl001_to_5_wo_sub.csv"
         )
         self.pipeline = SLHammocksPipeline(
             slhammocks_config=self.slhammocks_config,
@@ -30,7 +26,6 @@ class TestSkyPyPipeline(object):
     def test_specifying_skypy_configuration(self):
         # use case: Roman simulation
 
-        import os
         import speclite
         from slsim.Pipelines import roman_speclite
 
@@ -39,10 +34,7 @@ class TestSkyPyPipeline(object):
         roman_filters = roman_speclite.filter_names()
         speclite.filters.load_filters(*roman_filters)
 
-        skypy_config = os.path.join(
-            os.path.dirname(__file__),
-            "../../data/SkyPy/slhammock_skypy_roman.yml",
-        )
+        skypy_config = data_path("SkyPy", "slhammock_skypy_roman.yml")
         pipeline = SLHammocksPipeline(
             skypy_config=skypy_config,
             sky_area=self.sky_area,
