@@ -1,17 +1,30 @@
 """Bandpass conventions shared across SLSim.
 
-SLSim accepts survey band names such as ``"i"``, ``"F062"`` and ``"VIS"`` and
-maps them to the filter responses used by image simulation, supernova
+Short SLSim band names are the public API used by source magnitude columns
+such as ``mag_<band>`` and ``ps_mag_<band>``. The same name is resolved to a
+speclite filter or sncosmo bandpass in image simulation, supernova
 magnitudes, accretion-disk reprocessing and AGN/SN morphology.
 
-Supported default bands:
+Resolution order:
 
-- LSST: ``u``, ``g``, ``r``, ``i``, ``z``, ``y``
+1. A band registered by an observatory is mapped through that observatory's
+   ``speclite_fmt`` and ``sncosmo_fmt`` callables.
+2. A raw speclite or sncosmo filter name is passed through unchanged.
+3. Roman speclite filters are configured lazily on first use.
+
+Supported default bands and the curves they use:
+
+- LSST: ``u``, ``g``, ``r``, ``i``, ``z``, ``y``;
+  speclite ``lsst2023-<band>``, sncosmo ``lsst<band>``.
 - Roman: ``F062``, ``F087``, ``F106``, ``F129``, ``F158``, ``F184``,
-  ``F146``, ``F213``
-- Euclid: ``VIS``, ``Y``, ``J``, ``H``
+  ``F146``, ``F213``; speclite ``Roman-<band>``, sncosmo ``<band>``.
+- Euclid: ``VIS``, ``Y``, ``J``, ``H``; speclite ``Euclid-<band>``,
+  sncosmo ``euclid<band>``.
 
 Additional observatories can be registered with :func:`register_observatory`.
+Note that the speclite and sncosmo curves for the same survey band are not
+guaranteed to be identical; this module follows the curves already used by
+each downstream module.
 """
 
 import numpy as np
@@ -23,6 +36,10 @@ from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
 
 _OBSERVATORY_REGISTRY = {}
+
+# Fallback sncosmo bandpasses built from speclite responses. This avoids
+# writing bare survey names such as "VIS" into sncosmo's global registry.
+_SNCOSMO_BANDPASS_CACHE = {}
 
 # Default options in SLSim
 ROMAN_BAND_LIST = ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]
@@ -283,7 +300,10 @@ def get_band_effective_wavelength(band):
     if band in configured_wavelengths:
         return float(configured_wavelengths[band])
 
-    filter_name = get_speclite_filtername(band)
+    try:
+        filter_name = get_speclite_filtername(band)
+    except ValueError:
+        filter_name = None
     if filter_name is None:
         raise ValueError(
             f"Band '{band}' has neither an explicitly configured effective "
@@ -355,10 +375,13 @@ def get_speclite_filter(band):
             _configure_roman_filters_if_needed(filter_name)
             return speclite.filters.load_filter(filter_name)
         except ValueError as exc:
+            supported = ", ".join(get_all_supported_bands())
             raise ValueError(
-                f"Band '{band}' is not available in speclite. Load the filter "
-                f"first with speclite.filters.load_filter(...) or register the "
-                f"observatory with slsim.Util.bandpass.register_observatory()."
+                f"Band '{band}' is not a registered SLSim band and is not "
+                f"available in speclite. Supported SLSim bands: {supported}. "
+                "For custom filters, load the response first with "
+                "speclite.filters.load_filter(...) or register the observatory "
+                "with slsim.Util.bandpass.register_observatory()."
             ) from exc
 
 
@@ -379,6 +402,8 @@ def get_sncosmo_bandpass(band):
     """
     if isinstance(band, sncosmo.Bandpass):
         return band
+    if isinstance(band, str) and band in _SNCOSMO_BANDPASS_CACHE:
+        return _SNCOSMO_BANDPASS_CACHE[band]
     try:
         sncosmo_name = get_sncosmo_filtername(band)
     except ValueError:
@@ -394,9 +419,8 @@ def get_sncosmo_bandpass(band):
             filter_response.wavelength,
             filter_response.response,
             wave_unit="Angstrom",
-            name=band,
+            name=sncosmo_name,
         )
-        sncosmo.register(bandpass, name=band, force=True)
-        if sncosmo_name != band:
-            sncosmo.register(bandpass, name=sncosmo_name, force=True)
+        _SNCOSMO_BANDPASS_CACHE[band] = bandpass
+        _SNCOSMO_BANDPASS_CACHE[sncosmo_name] = bandpass
         return bandpass

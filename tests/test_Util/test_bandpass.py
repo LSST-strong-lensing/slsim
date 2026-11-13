@@ -1,4 +1,5 @@
 import pytest
+import sncosmo
 
 import slsim.Util.bandpass as bandpass_module
 from slsim.Util.bandpass import (
@@ -15,6 +16,17 @@ from slsim.Util.bandpass import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _restore_bandpass_state():
+    original_registry = dict(bandpass_module._OBSERVATORY_REGISTRY)
+    original_cache = dict(bandpass_module._SNCOSMO_BANDPASS_CACHE)
+    yield
+    bandpass_module._OBSERVATORY_REGISTRY.clear()
+    bandpass_module._OBSERVATORY_REGISTRY.update(original_registry)
+    bandpass_module._SNCOSMO_BANDPASS_CACHE.clear()
+    bandpass_module._SNCOSMO_BANDPASS_CACHE.update(original_cache)
+
+
 class _TestObservatory:
     def __init__(self, band, **kwargs):
         self.band = band
@@ -26,7 +38,23 @@ class _TestObservatory:
 def test_get_sncosmo_bandpass_resolves_survey_bands():
     assert get_sncosmo_bandpass("i").name == "lssti"
     assert get_sncosmo_bandpass("F062").name.lower().startswith("f062")
-    assert get_sncosmo_bandpass("VIS").name.lower() == "euclidvis"
+    assert get_sncosmo_filtername("VIS") == "euclidVIS"
+    assert get_speclite_filter("VIS").name == "Euclid-VIS"
+    assert isinstance(get_sncosmo_bandpass("VIS"), sncosmo.Bandpass)
+
+
+def test_get_sncosmo_bandpass_vis_fallback_uses_sncosmo_name(monkeypatch):
+    original_get_bandpass = sncosmo.get_bandpass
+
+    def fake_get_bandpass(name):
+        if name == "euclidVIS":
+            raise KeyError(name)
+        return original_get_bandpass(name)
+
+    monkeypatch.setattr(sncosmo, "get_bandpass", fake_get_bandpass)
+
+    bandpass = get_sncosmo_bandpass("VIS")
+    assert bandpass.name == "euclidVIS"
 
 
 def test_get_sncosmo_bandpass_passes_through_existing_bands():
@@ -50,8 +78,13 @@ def test_get_sncosmo_bandpass_builds_from_speclite():
     )
 
     bandpass = get_sncosmo_bandpass("TESTBAND")
-    assert bandpass.name == "TESTBAND"
+    assert bandpass.name == "slsim_test_band_not_in_sncosmo"
+    assert get_sncosmo_bandpass("TESTBAND") is bandpass
     assert get_sncosmo_bandpass("slsim_test_band_not_in_sncosmo") is bandpass
+
+    # The fallback must not leak a bare name into sncosmo's global registry.
+    with pytest.raises(Exception):
+        sncosmo.get_bandpass("TESTBAND")
 
 
 def test_get_speclite_filter_resolves_bands():
@@ -110,10 +143,21 @@ def test_default_band_conventions_are_shared():
 
 
 def test_get_speclite_filter_explains_how_to_load_missing_filter():
-    with pytest.raises(ValueError, match="Load the filter first"):
+    with pytest.raises(ValueError, match="Supported SLSim bands"):
         get_speclite_filter("not_a_real_speclite_filter")
 
 
 def test_get_speclite_filter_rejects_non_string_input():
     with pytest.raises(TypeError, match="Expected a band name"):
         get_speclite_filter(123)
+
+
+def test_band_effective_wavelength_without_speclite_or_explicit_wavelength():
+    bandpass_module.register_observatory(
+        name="NoWavelengthObs",
+        observatory_class=_TestObservatory,
+        bands=["NO_WAVE"],
+        speclite_fmt=None,
+    )
+    with pytest.raises(ValueError, match="neither an explicitly configured"):
+        bandpass_module.get_band_effective_wavelength("NO_WAVE")

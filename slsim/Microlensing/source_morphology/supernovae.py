@@ -112,7 +112,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
 
         try:
             self._bandpass = get_sncosmo_bandpass(self.band)
-        except (ValueError, KeyError) as exc:
+        except Exception as exc:
             raise ValueError(f"Band {self.band} not recognized by sncosmo.") from exc
 
         # Generate the analytical anchors automatically
