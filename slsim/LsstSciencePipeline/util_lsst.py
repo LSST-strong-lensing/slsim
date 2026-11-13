@@ -223,6 +223,7 @@ def transient_data_with_cadence(
     random_seed=None,
     microlensing=False,
     kwargs_microlensing=None,
+    return_original=False,
 ):
     """Puts lensed transient into the provided cadence. For LSST, this will be
     cadence from opsim.
@@ -260,20 +261,43 @@ def transient_data_with_cadence(
     :param kwargs_microlensing: Dictionary of keyword arguments for microlensing
         parameters.
     """
+    def _to_scalar(value):
+        arr = np.asarray(value, dtype=float).reshape(-1)
+        if arr.size == 0:
+            return np.nan
+        return float(arr[0])
+
     copied_exposure_data = exposure_data.copy()
     min_mjd = min(copied_exposure_data["obs_time"])
     max_mjd = max(copied_exposure_data["obs_time"])
-
-    min_lc_time, max_lc_time = (
-        min(lens_class.source(0)._source._lightcurve_time),
-        max(lens_class.source(0)._source._lightcurve_time),
-    )
 
     start_mjd_time = transient_event_time_mjd(min_mjd, max_mjd, random_seed=random_seed)
 
     copied_exposure_data["obs_time_in_days"] = convert_mjd_to_days(
         copied_exposure_data["obs_time"], start_mjd_time
     )
+    source_obj = lens_class.source(0)
+    source_inner = getattr(source_obj, "_source", source_obj)
+
+    lightcurve_time = getattr(source_inner, "_lightcurve_time", None)
+
+    if lightcurve_time is None:
+        arrival_times = lens_class.point_source_arrival_times()[0]
+        t_start, t_end = (
+            np.min(arrival_times + np.max(arrival_times)) - 60,
+            np.max(arrival_times + np.max(arrival_times)) + 180,
+        )
+        # arrival_times = np.asarray(
+        #     lens_class.point_source_arrival_times()[0], dtype=float
+        # )
+        # if arrival_times.size > 0:
+        #     t_start = np.min(arrival_times) - 60
+        #     t_end = np.max(arrival_times) + 180
+        # else:
+        #     t_start, t_end = -60.0, 180.0
+        lightcurve_time = np.linspace(t_start, t_end, 1000)
+
+    min_lc_time, max_lc_time = np.min(lightcurve_time), np.max(lightcurve_time)
 
     copied_exposure_data = copied_exposure_data[
         (copied_exposure_data["obs_time_in_days"] >= min_lc_time - 50)
@@ -284,67 +308,143 @@ def transient_data_with_cadence(
     lens_id = lens_class.generate_id(ra=ra_dec[0].degree, dec=ra_dec[1].degree)
 
     num_images = lens_class.image_number[0]
-    mag_images = {f"mag_image_{i+1}": [] for i in range(num_images)}
-    mag_errors = {
-        f"mag_error_image_{i+1}_{err}": []
-        for i in range(num_images)
-        for err in ["low", "high"]
-    }
 
-    for exposure in copied_exposure_data:
-        obs_time = exposure["obs_time_in_days"]
+    if return_original:
+        modes = [
+            ("ml", True, kwargs_microlensing),
+            ("noml", False, None),
+        ]
+    else:
+        modes = [
+            ("ml" if microlensing else "noml", bool(microlensing), kwargs_microlensing if microlensing else None)
+        ]
 
-        magnitudes = lens_class.point_source_magnitude(
-            band=exposure["band"],
-            lensed=True,
-            time=obs_time,
-            microlensing=True,
-            kwargs_microlensing=kwargs_microlensing,
-        )[0]
+    results = {}
 
-        # Compute noise
-        bkg_noise, fwhm = exposure["bkg_noise"], exposure["psf_fwhm"]
-        N_pix = np.pi * (2 * fwhm) ** 2 / (pix_scale**2)
-        sigma_noise_total = bkg_noise / np.sqrt(N_pix)
+    for mode_name, use_microlensing, mode_kwargs in modes:
+        flux_images = {f"flux_image_{i+1}": [] for i in range(num_images)}
+        flux_errors = {
+            f"flux_error_image_{i+1}": []
+            for i in range(num_images)
+        }
+        mag_images = {f"mag_image_{i+1}": [] for i in range(num_images)}
+        mag_errors = {
+            f"mag_error_image_{i+1}_{err}": []
+            for i in range(num_images)
+            for err in ["low", "high"]
+        }
 
-        for i in range(num_images):
-            amplitude = magnitude_to_amplitude(magnitudes[i], exposure["zero_point"])
-            total_counts = amplitude * exposure["expo_time"]
-            poisson_noise = np.sqrt(total_counts)
-            flux_err = np.sqrt(sigma_noise_total**2 + poisson_noise**2)
+        second_copied_exposure_data = copied_exposure_data.copy()
 
-            mag_realiz, mag_err_low, mag_err_high = flux_error_to_magnitude_error(
-                amplitude,
-                flux_err,
-                exposure["zero_point"],
-                noise=noise,
-                symmetric=symmetric,
-            )
+        for exposure in copied_exposure_data:
+            obs_time = exposure["obs_time_in_days"]
 
-            mag_images[f"mag_image_{i+1}"].append(mag_realiz)
-            mag_errors[f"mag_error_image_{i+1}_low"].append(mag_err_low)
-            mag_errors[f"mag_error_image_{i+1}_high"].append(mag_err_high)
+            magnitudes = np.asarray(
+                lens_class.point_source_magnitude(
+                band=exposure["band"],
+                lensed=True,
+                time=obs_time,
+                microlensing=use_microlensing,
+                kwargs_microlensing=mode_kwargs,
+            )[0],
+                dtype=float,
+            ).reshape(-1)
 
-    # Fill missing values for systems with <4 images
-    for i in range(num_images, 4):
-        mag_images[f"mag_image_{i+1}"] = [-1.0] * len(copied_exposure_data)
-        mag_errors[f"mag_error_image_{i+1}_low"] = [-1.0] * len(copied_exposure_data)
-        mag_errors[f"mag_error_image_{i+1}_high"] = [-1.0] * len(copied_exposure_data)
+            # Compute noise
+            bkg_noise, fwhm = _to_scalar(exposure["bkg_noise"]), _to_scalar(exposure["psf_fwhm"])
+            expo_time = _to_scalar(exposure["expo_time"])
+            zero_point = _to_scalar(exposure["zero_point"])
+            N_pix = np.pi * (2 * fwhm) ** 2 / (pix_scale**2)
+            sigma_bkg_cps = (bkg_noise * np.sqrt(N_pix)) 
 
-    for key in list(mag_images.keys()) + list(mag_errors.keys()):
-        mag_images_or_errors = mag_images if key in mag_images else mag_errors
-        mag_images_or_errors[key] = np.array(
-            mag_images_or_errors[key], dtype=float
-        ).reshape(-1)
+            for i in range(num_images):
+                mag_i = _to_scalar(magnitudes[i])
+                flux_cps = _to_scalar(magnitude_to_amplitude(mag_i, zero_point))
+                sigma_source_cps = np.sqrt(flux_cps / expo_time)  # Poisson noise in counts per second
+                flux_err_cps = np.sqrt(sigma_bkg_cps**2 + sigma_source_cps**2)
 
-    # Create and add columns to the table
-    copied_exposure_data.add_columns(
-        [Column(name="lens_id", data=[lens_id] * len(copied_exposure_data))]
-        + [Column(name=name, data=data) for name, data in mag_images.items()]
-        + [Column(name=name, data=data) for name, data in mag_errors.items()]
-    )
+                if noise:
+                    flux_realiz_cps = _to_scalar(
+                        flux_cps
+                        + np.random.normal(
+                            0.0,
+                            flux_err_cps,
+                        )
+                    )
+                else:
+                    flux_realiz_cps = flux_cps
 
-    return copied_exposure_data
+                # Save observed flux and its uncertainty
+                flux_images[
+                    f"flux_image_{i+1}"
+                ].append(flux_realiz_cps)
+
+                flux_errors[
+                    f"flux_error_image_{i+1}"
+                ].append(flux_err_cps)
+
+                # Convert the SAME observed flux to magnitude
+                if flux_realiz_cps > 0:
+
+                    mag_realiz, mag_err_low, mag_err_high = (
+                        flux_error_to_magnitude_error(
+                            flux_realiz_cps,
+                            flux_err_cps,
+                            zero_point,
+                            noise=False,  # IMPORTANT: do not draw noise again
+                            symmetric=symmetric,
+                        )
+                    )
+                    mag_realiz = _to_scalar(mag_realiz)
+                    mag_err_low = _to_scalar(mag_err_low)
+                    mag_err_high = _to_scalar(mag_err_high)
+
+                else:
+
+                    # Negative flux is a valid low-S/N flux measurement,
+                    # but has no defined astronomical magnitude.
+                    mag_realiz = np.nan
+                    mag_err_low = np.nan
+                    mag_err_high = np.nan
+
+
+                mag_images[f"mag_image_{i+1}"].append(mag_realiz)
+                mag_errors[f"mag_error_image_{i+1}_low"].append(mag_err_low)
+                mag_errors[f"mag_error_image_{i+1}_high"].append(mag_err_high)
+
+        # Fill missing values for systems with <4 images
+        for i in range(num_images, 4):
+            mag_images[f"mag_image_{i+1}"] = [-1.0] * len(copied_exposure_data)
+            mag_errors[f"mag_error_image_{i+1}_low"] = [-1.0] * len(copied_exposure_data)
+            mag_errors[f"mag_error_image_{i+1}_high"] = [-1.0] * len(copied_exposure_data)
+
+            flux_images[f"flux_image_{i+1}"] = [-1.0] * len(copied_exposure_data)
+            flux_errors[f"flux_error_image_{i+1}"] = [-1.0] * len(copied_exposure_data)
+
+
+        for key in list(mag_images.keys()) + list(mag_errors.keys()):
+            mag_images_or_errors = mag_images if key in mag_images else mag_errors
+            mag_images_or_errors[key] = np.array(
+                mag_images_or_errors[key], dtype=float
+            ).reshape(-1)
+
+        for key in list(flux_images.keys()) + list(flux_errors.keys()):
+            flux_images_or_errors = flux_images if key in flux_images else flux_errors
+            flux_images_or_errors[key] = np.array(
+                flux_images_or_errors[key], dtype=float
+            ).reshape(-1)
+
+        # Create and add columns to the table
+        second_copied_exposure_data.add_columns(
+            [Column(name="lens_id", data=[lens_id] * len(copied_exposure_data))]
+            + [Column(name=name, data=data) for name, data in mag_images.items()]
+            + [Column(name=name, data=data) for name, data in mag_errors.items()]
+            + [Column(name=name, data=data) for name, data in flux_images.items()]
+            + [Column(name=name, data=data) for name, data in flux_errors.items()]
+        )
+        results[mode_name] = second_copied_exposure_data
+
+    return results if return_original else results[mode_name]
 
 
 def extract_lightcurves_in_different_bands(transient_data_table):
@@ -368,11 +468,15 @@ def extract_lightcurves_in_different_bands(transient_data_table):
     # Initialize dictionaries to hold magnitudes, errors, observation times, and
     # optionally image lists
     magnitudes = {f"mag_image_{i}": {band: [] for band in bands} for i in range(1, 5)}
+    fluxes = {f"flux_image_{i}": {band: [] for band in bands} for i in range(1, 5)}
     errors_low = {
         f"mag_error_image_{i}_low": {band: [] for band in bands} for i in range(1, 5)
     }
     errors_high = {
         f"mag_error_image_{i}_high": {band: [] for band in bands} for i in range(1, 5)
+    }
+    flux_errors = {
+        f"flux_error_image_{i}": {band: [] for band in bands} for i in range(1, 5)
     }
     obs_time = {band: [] for band in bands}
 
@@ -388,16 +492,25 @@ def extract_lightcurves_in_different_bands(transient_data_table):
             err_low_col = f"mag_error_image_{i}_low"
             err_high_col = f"mag_error_image_{i}_high"
 
+            flux_col = f"flux_image_{i}"
+            flux_err_col = f"flux_error_image_{i}"
+
             if mag_col in band_data.colnames and np.any(band_data[mag_col] != -1):
                 # Only proceed with the column if the magnitude is not -1
                 magnitudes[mag_col][band] = band_data[mag_col].tolist()
                 errors_low[err_low_col][band] = band_data[err_low_col].tolist()
                 errors_high[err_high_col][band] = band_data[err_high_col].tolist()
 
+            if flux_col in band_data.colnames and np.any(band_data[flux_col] != -1):
+                fluxes[flux_col][band] = band_data[flux_col].tolist()
+                flux_errors[flux_err_col][band] = band_data[flux_err_col].tolist()
+
     result = {
         "magnitudes": magnitudes,
         "errors_low": errors_low,
         "errors_high": errors_high,
+        "fluxes": fluxes,
+        "flux_errors": flux_errors,
         "obs_time": obs_time,
     }
 
