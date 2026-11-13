@@ -261,6 +261,7 @@ def transient_data_with_cadence(
     :param kwargs_microlensing: Dictionary of keyword arguments for microlensing
         parameters.
     """
+
     def _to_scalar(value):
         arr = np.asarray(value, dtype=float).reshape(-1)
         if arr.size == 0:
@@ -316,17 +317,18 @@ def transient_data_with_cadence(
         ]
     else:
         modes = [
-            ("ml" if microlensing else "noml", bool(microlensing), kwargs_microlensing if microlensing else None)
+            (
+                "ml" if microlensing else "noml",
+                bool(microlensing),
+                kwargs_microlensing if microlensing else None,
+            )
         ]
 
     results = {}
 
     for mode_name, use_microlensing, mode_kwargs in modes:
         flux_images = {f"flux_image_{i+1}": [] for i in range(num_images)}
-        flux_errors = {
-            f"flux_error_image_{i+1}": []
-            for i in range(num_images)
-        }
+        flux_errors = {f"flux_error_image_{i+1}": [] for i in range(num_images)}
         mag_images = {f"mag_image_{i+1}": [] for i in range(num_images)}
         mag_errors = {
             f"mag_error_image_{i+1}_{err}": []
@@ -341,26 +343,30 @@ def transient_data_with_cadence(
 
             magnitudes = np.asarray(
                 lens_class.point_source_magnitude(
-                band=exposure["band"],
-                lensed=True,
-                time=obs_time,
-                microlensing=use_microlensing,
-                kwargs_microlensing=mode_kwargs,
-            )[0],
+                    band=exposure["band"],
+                    lensed=True,
+                    time=obs_time,
+                    microlensing=use_microlensing,
+                    kwargs_microlensing=mode_kwargs,
+                )[0],
                 dtype=float,
             ).reshape(-1)
 
             # Compute noise
-            bkg_noise, fwhm = _to_scalar(exposure["bkg_noise"]), _to_scalar(exposure["psf_fwhm"])
+            bkg_noise, fwhm = _to_scalar(exposure["bkg_noise"]), _to_scalar(
+                exposure["psf_fwhm"]
+            )
             expo_time = _to_scalar(exposure["expo_time"])
             zero_point = _to_scalar(exposure["zero_point"])
             N_pix = np.pi * (2 * fwhm) ** 2 / (pix_scale**2)
-            sigma_bkg_cps = (bkg_noise * np.sqrt(N_pix)) 
+            sigma_bkg_cps = bkg_noise * np.sqrt(N_pix)
 
             for i in range(num_images):
                 mag_i = _to_scalar(magnitudes[i])
                 flux_cps = _to_scalar(magnitude_to_amplitude(mag_i, zero_point))
-                sigma_source_cps = np.sqrt(flux_cps / expo_time)  # Poisson noise in counts per second
+                sigma_source_cps = np.sqrt(
+                    flux_cps / expo_time
+                )  # Poisson noise in counts per second
                 flux_err_cps = np.sqrt(sigma_bkg_cps**2 + sigma_source_cps**2)
 
                 if noise:
@@ -375,13 +381,9 @@ def transient_data_with_cadence(
                     flux_realiz_cps = flux_cps
 
                 # Save observed flux and its uncertainty
-                flux_images[
-                    f"flux_image_{i+1}"
-                ].append(flux_realiz_cps)
+                flux_images[f"flux_image_{i+1}"].append(flux_realiz_cps)
 
-                flux_errors[
-                    f"flux_error_image_{i+1}"
-                ].append(flux_err_cps)
+                flux_errors[f"flux_error_image_{i+1}"].append(flux_err_cps)
 
                 # Convert the SAME observed flux to magnitude
                 if flux_realiz_cps > 0:
@@ -407,7 +409,6 @@ def transient_data_with_cadence(
                     mag_err_low = np.nan
                     mag_err_high = np.nan
 
-
                 mag_images[f"mag_image_{i+1}"].append(mag_realiz)
                 mag_errors[f"mag_error_image_{i+1}_low"].append(mag_err_low)
                 mag_errors[f"mag_error_image_{i+1}_high"].append(mag_err_high)
@@ -415,12 +416,15 @@ def transient_data_with_cadence(
         # Fill missing values for systems with <4 images
         for i in range(num_images, 4):
             mag_images[f"mag_image_{i+1}"] = [-1.0] * len(copied_exposure_data)
-            mag_errors[f"mag_error_image_{i+1}_low"] = [-1.0] * len(copied_exposure_data)
-            mag_errors[f"mag_error_image_{i+1}_high"] = [-1.0] * len(copied_exposure_data)
+            mag_errors[f"mag_error_image_{i+1}_low"] = [-1.0] * len(
+                copied_exposure_data
+            )
+            mag_errors[f"mag_error_image_{i+1}_high"] = [-1.0] * len(
+                copied_exposure_data
+            )
 
             flux_images[f"flux_image_{i+1}"] = [-1.0] * len(copied_exposure_data)
             flux_errors[f"flux_error_image_{i+1}"] = [-1.0] * len(copied_exposure_data)
-
 
         for key in list(mag_images.keys()) + list(mag_errors.keys()):
             mag_images_or_errors = mag_images if key in mag_images else mag_errors
