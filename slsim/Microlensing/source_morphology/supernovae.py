@@ -3,8 +3,11 @@ __author__ = "Paras Sharma"
 import numpy as np
 from scipy.interpolate import interp1d
 from slsim.Microlensing.source_morphology.source_morphology import SourceMorphology
-from slsim.Util.bandpass import get_sncosmo_bandpass
-import slsim.ImageSimulation.image_quality_lenstronomy as iql
+from slsim.Util.bandpass import (
+    get_all_supported_bands,
+    get_sncosmo_bandpass,
+    get_sncosmo_filtername,
+)
 
 
 class SupernovaeSourceMorphology(SourceMorphology):
@@ -50,8 +53,8 @@ class SupernovaeSourceMorphology(SourceMorphology):
             - 'kernels': List or 3D array of 2D kernel maps normalized to 1.
             - 'pixel_scales_m': 1D array of pixel scales in meters corresponding to each kernel.
         """
-        if observing_wavelength_band in iql.get_all_supported_bands():
-            self.band = iql.get_sncosmo_filtername(observing_wavelength_band)
+        if observing_wavelength_band in get_all_supported_bands():
+            self.band = get_sncosmo_filtername(observing_wavelength_band)
         else:
             self.band = observing_wavelength_band
 

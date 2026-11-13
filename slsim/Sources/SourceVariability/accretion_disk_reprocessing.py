@@ -315,8 +315,12 @@ class AccretionDiskReprocessing(object):
         """
         try:
             filter_response = get_speclite_filter(known_band)
-        except TypeError as exc:
-            raise ValueError("only speclite filters are implimented") from exc
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"Could not resolve band '{known_band}' as a speclite filter. "
+                "Load the filter first with speclite.filters.load_filter(...), "
+                "or register it with slsim.Util.bandpass.register_observatory()."
+            ) from exc
 
         effective_wavelength = (filter_response.effective_wavelength).to(u.nm)
         source_plane_wavelength = effective_wavelength / (1 + redshift)

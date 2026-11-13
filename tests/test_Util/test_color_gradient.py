@@ -7,7 +7,7 @@ from slsim.Util.color_gradient import (
     default_reference_band,
     radial_color_gradient_image,
 )
-from slsim.ImageSimulation.image_quality_lenstronomy import register_observatory
+from slsim.Util.bandpass import register_observatory
 from astropy.table import Table
 
 
