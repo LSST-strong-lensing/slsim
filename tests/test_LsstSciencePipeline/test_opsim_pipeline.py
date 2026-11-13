@@ -309,13 +309,17 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     expected_keys = lightcurves.keys()
     colname = result.colnames
     assert isinstance(result, Table)
-    assert len(colname) == 22  # 8 already existing col and 15 newly added.
+    assert len(colname) == 30  # 22 already existing col and 8 newly added.
     assert "obs_time_in_days" in colname
     assert "lens_id" in colname
     assert "mag_image_1" in colname
     assert "mag_image_2" in colname
     assert "mag_image_3" in colname
     assert "mag_image_4" in colname
+    assert "flux_image_1" in colname
+    assert "flux_image_2" in colname
+    assert "flux_image_3" in colname
+    assert "flux_image_4" in colname
     assert "mag_error_image_1_low" in colname
     assert "mag_error_image_1_high" in colname
     assert "mag_error_image_2_low" in colname
@@ -324,10 +328,16 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     assert "mag_error_image_3_high" in colname
     assert "mag_error_image_4_low" in colname
     assert "mag_error_image_4_high" in colname
+    assert "flux_error_image_1" in colname
+    assert "flux_error_image_2" in colname
+    assert "flux_error_image_3" in colname
+    assert "flux_error_image_4" in colname
 
     assert "magnitudes" in expected_keys
     assert "errors_low" in expected_keys
     assert "errors_high" in expected_keys
+    assert "fluxes" in lightcurves
+    assert "flux_errors" in lightcurves
     assert "obs_time" in expected_keys
     results_i = result[result["band"] == "i"]
     mag_i = results_i["mag_image_1"]
