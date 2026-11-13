@@ -141,3 +141,13 @@ dmypy.json
 .pyre/
 
 .idea/*
+
+# sn-cosmo outputs
+*.DAT
+*.dat
+*.fits
+*.LIST*
+*.BAD
+*.SED
+*.INFO
+*.INPUT
