@@ -22,7 +22,6 @@ class BNSCatalog:
         model_name="mosfit_kilonova",
         mag_zpsys="AB",
         modeldir=None,
-        backend="redback",
     ):
         """
         :param cosmo: Astropy cosmology instance.
@@ -63,8 +62,6 @@ class BNSCatalog:
         :type mag_zpsys: str or None
         :param modeldir: Retained for compatibility; external models are unsupported.
         :type modeldir: str or None
-        :param backend: Light curve backend, "redback" or "mosfit".
-        :type backend: str
         """
 
         self._cosmo = cosmo
@@ -77,7 +74,7 @@ class BNSCatalog:
         self._model_name = model_name
         self._mag_zpsys = mag_zpsys
         self._modeldir = modeldir
-        self._backend = backend
+        self._kwargs_kilonova = {}
 
         default_kwargs_kilonova = {
             "mej_1": 0.01,
@@ -95,15 +92,11 @@ class BNSCatalog:
             "kappa_gamma": 10,
         }
 
-        if backend == "redback" and model_name == "mosfit_kilonova":
-            self._kwargs_kilonova = {
-                **default_kwargs_kilonova,
-                **(kwargs_kilonova or {}),
-            }
-        else:
-            self._kwargs_kilonova = (
-                {} if kwargs_kilonova is None else kwargs_kilonova.copy()
-            )
+        if model_name == "mosfit_kilonova":
+            self._kwargs_kilonova.update(default_kwargs_kilonova)
+
+        if kwargs_kilonova is not None:
+            self._kwargs_kilonova.update(kwargs_kilonova)
 
     def bns_catalog(self):
         redshifts = np.linspace(0, self._z_max, 500)
@@ -128,16 +121,14 @@ class BNSCatalog:
         bns_table["variability_model"] = ["light_curve"] * len(bns_table)
         bns_table["mag_zpsys"] = [self._mag_zpsys] * len(bns_table)
 
-        bns_table["backend"] = [self._backend] * len(bns_table)
-
         event_parameters = np.empty(len(bns_table), dtype=object)
 
         for index, event in enumerate(bns_table):
             parameters = self._kwargs_kilonova.copy()
 
-            if self._backend == "mosfit" and self._model_name == "bns":
-                parameters["Mchirp"] = float(event["Mchirp"])
-                parameters["q"] = float(event["q"])
+            if self._model_name == "nicholl_bns":
+                parameters["mass_1"] = float(event["mass_1"])
+                parameters["mass_2"] = float(event["mass_2"])
 
             event_parameters[index] = parameters
 
