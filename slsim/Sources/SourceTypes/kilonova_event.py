@@ -20,7 +20,6 @@ class KilonovaEvent(SourceBase):
         kwargs_variability=None,
         kwargs_kilonova=None,
         cosmo=None,
-        backend="redback",
         **kwargs,
     ):
         """
@@ -30,9 +29,9 @@ class KilonovaEvent(SourceBase):
             input for the Variability class.
         :type variability_model: str
         :param model_name: Kilonova light curve model to be used. If not provided, the
-            default model is the MOSFiT-based kilonova model.
+            default model is the mosfit_kilonova.
         :type model_name: str
-        :param mag_zpsys: Optional, AB or Vega (AB default).
+        :param mag_zpsys: Optional, AB is default.
         :type mag_zpsys: str
         :param modeldir: Directory including files for external kilonova models. This
             option is currently not supported.
@@ -46,8 +45,6 @@ class KilonovaEvent(SourceBase):
         :type kwargs_kilonova: dict or None
         :param cosmo: Astropy cosmology instance.
         :type cosmo: `~astropy.cosmology`
-        :param backend: Light curve backend, "redback" or "mosfit".
-        :type backend: str
         :param kwargs: Keyword arguments passed to the SourceBase class. This may contain
             source properties such as redshift and offsets from the host galaxy in [arcsec].
         :type kwargs: dict
@@ -66,7 +63,6 @@ class KilonovaEvent(SourceBase):
         self._model_name = model_name
         self._mag_zpsys = mag_zpsys
         self._modeldir = modeldir
-        self._backend = backend
 
         if kwargs_kilonova is None:
             self._kwargs_kilonova = {}
@@ -90,7 +86,6 @@ class KilonovaEvent(SourceBase):
                     model_name=self._model_name,
                     mag_zpsys=self._mag_zpsys,
                     cosmo=self._cosmo,
-                    backend=self._backend,
                     model_parameters=self._kwargs_kilonova,
                 )
                 self._lightcurve_class = lightcurve_class
@@ -106,11 +101,13 @@ class KilonovaEvent(SourceBase):
                 provided_band = element
 
                 try:
-                    magnitudes = lightcurve_class.get_apparent_magnitude(
+                    light_curve_table = lightcurve_class.get_apparent_magnitude(
                         time=times,
                         band=provided_band,
                     )
                     # make sure before and after the event, the flux is zero
+                    times = light_curve_table["time"]
+                    magnitudes = light_curve_table["magnitude"]
                     magnitudes = np.append(np.inf, magnitudes)
                     magnitudes = np.append(magnitudes, np.inf)
                     padded_times = np.append(times[0] - (times[1] - times[0]), times)
