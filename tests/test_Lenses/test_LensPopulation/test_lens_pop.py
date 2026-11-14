@@ -6,6 +6,7 @@ import pickle
 import numpy as np
 from numpy.testing import assert_raises
 import slsim.Pipelines as pipelines
+from slsim.Util.data_path import data_path
 
 # import slsim.Deflectors as deflectors
 from slsim.Deflectors.DeflectorPopulation.galaxy_deflectors import GalaxyDeflectors
@@ -200,14 +201,8 @@ def test_cluster_lens_pop_instance():
     kwargs_deflector_cut = {"z_min": 0.2, "z_max": 1.0}
     kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.25, "z_max": 5.0}
 
-    path = os.path.dirname(__file__)
-    module_path = os.path.dirname(os.path.dirname(os.path.dirname(path)))
-    cluster_catalog_path = os.path.join(
-        module_path, "data/redMaPPer/clusters_example.fits"
-    )
-    members_catalog_path = os.path.join(
-        module_path, "data/redMaPPer/members_example.fits"
-    )
+    cluster_catalog_path = data_path("redMaPPer", "clusters_example.fits")
+    members_catalog_path = data_path("redMaPPer", "members_example.fits")
     cluster_catalog = Table.read(cluster_catalog_path)
     members_catalog = Table.read(members_catalog_path)
 

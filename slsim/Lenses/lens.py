@@ -764,7 +764,7 @@ class Lens(LensedSystemBase):
             source_index=source_index
         )
 
-        x_image, y_image = self._point_source_image_positions(source_index=source_index)
+        x_image, y_image = self.point_source_image_positions()[source_index]
         arrival_times = lens_model.arrival_time(
             x_image, y_image, kwargs_lens=kwargs_lens
         )
@@ -908,7 +908,7 @@ class Lens(LensedSystemBase):
         """
         # TODO: might have to change conventions between extended and point source
         if lensed:
-            magnif = self._point_source_magnification(source_index)
+            magnif = self.point_source_magnification()[source_index]
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
                 time = time
@@ -992,9 +992,9 @@ class Lens(LensedSystemBase):
         )
         lenstronomy_kwargs_lens = lenstronomy_kwargs[1]["kwargs_lens"]
 
-        image_positions_x, image_positions_y = self._point_source_image_positions(
+        image_positions_x, image_positions_y = self.point_source_image_positions()[
             source_index
-        )
+        ]
 
         kappa_star_images = self.kappa_star(image_positions_x, image_positions_y)
         kappa_tot_images = lens_model_lenstronomy.kappa(
@@ -1217,9 +1217,9 @@ class Lens(LensedSystemBase):
         :return: extended source magnitude of a single source.
         """
         if lensed:
-            magnif = self._point_source_magnification(
-                source_index=source_index, extended=True
-            )
+            magnif = self.extended_source_magnification_for_individual_image()[
+                source_index
+            ]
             magnif_log = 2.5 * np.log10(abs(magnif))
             source_mag_unlensed = self.source(source_index).extended_source_magnitude(
                 band
@@ -1284,11 +1284,9 @@ class Lens(LensedSystemBase):
         )
 
         if extended:
-            img_x, img_y = self._extended_source_image_positions(
-                source_index=source_index
-            )
+            img_x, img_y = self.extended_source_image_positions[source_index]
         else:
-            img_x, img_y = self._point_source_image_positions(source_index=source_index)
+            img_x, img_y = self.point_source_image_positions()[source_index]
         ps_magnification = lens_model_class.magnification(img_x, img_y, kwargs_lens)
         return ps_magnification
 
@@ -1598,13 +1596,9 @@ class Lens(LensedSystemBase):
             if ps_type is None:
                 pass
             else:
-                img_x, img_y = self._point_source_image_positions(
-                    source_index=index,
-                )
+                img_x, img_y = self.point_source_image_positions()[index]
                 if band is None:
-                    image_magnitudes = np.abs(
-                        self._point_source_magnification(source_index=index)
-                    )
+                    image_magnitudes = np.abs(self.point_source_magnification()[index])
                 else:
                     image_magnitudes = self._point_source_magnitude(
                         band=band,

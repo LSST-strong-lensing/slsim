@@ -5,6 +5,7 @@ import datetime
 import numpy as np
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from slsim.ImageSimulation import image_quality_lenstronomy
+from slsim.Util.data_path import data_path
 import os.path
 import pickle
 from stpsf.roman import WFI
@@ -311,9 +312,7 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
     if psf_directory is not None:
         psf_file_path = os.path.join(psf_directory, psf_file_name)
     else:
-        psf_file_path = os.path.join(
-            os.path.dirname(__file__), "../..", "data", "stpsf", psf_file_name
-        )
+        psf_file_path = data_path("stpsf", psf_file_name)
 
     if os.path.exists(psf_file_path):
         with open(psf_file_path, "rb") as psf_file:

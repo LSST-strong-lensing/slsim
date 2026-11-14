@@ -13,7 +13,7 @@ from slsim.Util.param_util import (
 from astropy import units as u
 from astropy.table import Table
 from slsim.Sources.source import Source
-import os
+from slsim.Util.data_path import data_path
 
 
 class Galaxies(SourcePopBase):
@@ -572,14 +572,8 @@ def down_sample_to_dc2(galaxy_pop, sky_area):
      Redshift bins for returned populations are: (2-2.5), (2.5-3), (3-3.5),
      (3.5-4), (4-4.5), (4.5-5)
     """
-    path = os.path.dirname(__file__)
-    new_path = path[: path.rfind("slsim/")]
-    module_path = os.path.dirname(new_path)
-    # path1 = os.path.join(
-    #    module_path, "data/DC2_data/dc2_galaxy_count_1.5_2.npy"
-    # )
-    path2 = os.path.join(module_path, "data/DC2_data/dc2_galaxy_count_2_2.5.npy")
-    path3 = os.path.join(module_path, "data/DC2_data/dc2_galaxy_count_2.5_3.npy")
+    path2 = data_path("DC2_data", "dc2_galaxy_count_2_2.5.npy")
+    path3 = data_path("DC2_data", "dc2_galaxy_count_2.5_3.npy")
     # DC2 galaxy counts in 3 different redshift bins: (2-2.5), (2.5-3). Beyond 3
     # , we use the same count as 3rd bin because DC2 only reach up to redshift 3.
     # dN1 = np.load(path1)
