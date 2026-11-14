@@ -4,7 +4,6 @@ import numpy as np
 from scipy.interpolate import interp1d
 from slsim.Microlensing.source_morphology.source_morphology import SourceMorphology
 from slsim.Util.bandpass import (
-    get_all_supported_bands,
     get_sncosmo_bandpass,
     get_sncosmo_filtername,
 )
@@ -53,9 +52,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
             - 'kernels': List or 3D array of 2D kernel maps normalized to 1.
             - 'pixel_scales_m': 1D array of pixel scales in meters corresponding to each kernel.
         """
-        if observing_wavelength_band in get_all_supported_bands():
+        try:
             self.band = get_sncosmo_filtername(observing_wavelength_band)
-        else:
+        except ValueError:
             self.band = observing_wavelength_band
 
         self.source_redshift = source_redshift
@@ -110,10 +109,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
         else:
             self._sn_model = sncosmo.Model(source=self.sn_model_name)
 
-        try:
-            self._bandpass = get_sncosmo_bandpass(self.band)
-        except Exception as exc:
-            raise ValueError(f"Band {self.band} not recognized by sncosmo.") from exc
+        self._bandpass = get_sncosmo_bandpass(self.band)
 
         # Generate the analytical anchors automatically
         min_t = self._sn_model.mintime()

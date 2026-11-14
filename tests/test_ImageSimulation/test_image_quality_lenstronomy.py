@@ -304,10 +304,6 @@ def test_band_helpers_are_re_exported_from_image_module():
 
     assert iql.get_speclite_filtername is bandpass.get_speclite_filtername
     assert iql.register_observatory is bandpass.register_observatory
-    assert "get_speclite_filtername" in dir(iql)
-
-    with pytest.raises(AttributeError, match="has no attribute"):
-        iql.not_a_bandpass_helper
 
 
 if __name__ == "__main__":

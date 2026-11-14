@@ -37,9 +37,6 @@ from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
 
 _OBSERVATORY_REGISTRY = {}
 
-# Fallback sncosmo bandpasses built from speclite responses. This avoids
-# writing bare survey names such as "VIS" into sncosmo's global registry.
-_SNCOSMO_BANDPASS_CACHE = {}
 
 # Default options in SLSim
 ROMAN_BAND_LIST = ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]
@@ -300,15 +297,7 @@ def get_band_effective_wavelength(band):
     if band in configured_wavelengths:
         return float(configured_wavelengths[band])
 
-    try:
-        filter_name = get_speclite_filtername(band)
-    except ValueError:
-        filter_name = None
-    if filter_name is None:
-        raise ValueError(
-            f"Band '{band}' has neither an explicitly configured effective "
-            f"wavelength nor a registered speclite filter response."
-        )
+    filter_name = get_speclite_filtername(band)
     response = speclite.filters.load_filter(filter_name)
     return float(response.effective_wavelength.to("micron").value)
 
@@ -344,45 +333,37 @@ def get_speclite_filter(band):
     """Return the speclite response for a SLSim band or speclite filter name.
 
     Supported SLSim bands are resolved through the observatory registry.
-    Already loaded speclite filter names and ``FilterResponse`` instances are
-    also accepted. If a filter is not yet available in speclite, load it first
-    with ``speclite.filters.load_filter`` or register it with
+    If a filter is not yet available in speclite, load it first with
+    ``speclite.filters.load_filter`` or register it with
     :func:`register_observatory`.
 
-    :param band: SLSim band name (e.g. ``"i"``, ``"F062"``, ``"VIS"``),
-        speclite filter name (e.g. ``"lsst2023-i"``) or an existing
-        ``speclite.filters.FilterResponse``
-    :type band: str or speclite.filters.FilterResponse
+    :param band: SLSim band name (e.g. ``"i"``, ``"F062"``, ``"VIS"``) or
+        speclite filter name (e.g. ``"lsst2023-i"``).
+    :type band: str
     :return: speclite filter response
     :rtype: speclite.filters.FilterResponse
-    :raises TypeError: if ``band`` is neither a string nor a FilterResponse
     :raises ValueError: if the filter is not available in speclite
     """
-    if isinstance(band, speclite.filters.FilterResponse):
-        return band
     if not isinstance(band, str):
-        raise TypeError(
-            f"Expected a band name or speclite FilterResponse, got {type(band).__name__}."
-        )
+        raise ValueError(f"Expected a string band name, got {type(band).__name__}.")
+
     try:
         filter_name = get_speclite_filtername(band)
     except ValueError:
         filter_name = band
+
+    _configure_roman_filters_if_needed(filter_name)
     try:
         return speclite.filters.load_filter(filter_name)
-    except ValueError:
-        try:
-            _configure_roman_filters_if_needed(filter_name)
-            return speclite.filters.load_filter(filter_name)
-        except ValueError as exc:
-            supported = ", ".join(get_all_supported_bands())
-            raise ValueError(
-                f"Band '{band}' is not a registered SLSim band and is not "
-                f"available in speclite. Supported SLSim bands: {supported}. "
-                "For custom filters, load the response first with "
-                "speclite.filters.load_filter(...) or register the observatory "
-                "with slsim.Util.bandpass.register_observatory()."
-            ) from exc
+    except ValueError as exc:
+        supported = ", ".join(get_all_supported_bands())
+        raise ValueError(
+            f"Band '{band}' is not a registered SLSim band and is not "
+            f"available in speclite. Supported SLSim bands: {supported}. "
+            "Load the filter first with "
+            "speclite.filters.load_filter(...) or register the observatory "
+            "with slsim.Util.bandpass.register_observatory()."
+        ) from exc
 
 
 def get_sncosmo_bandpass(band):
@@ -393,34 +374,32 @@ def get_sncosmo_bandpass(band):
     image-simulation module. Physical or already registered sncosmo names such
     as ``"bessellb"`` are passed through unchanged.
 
-    :param band: SLSim band name, sncosmo band name or an existing
-        ``sncosmo.Bandpass``
-    :type band: str or sncosmo.Bandpass
+    :param band: SLSim band name or sncosmo band name.
+    :type band: str
     :return: sncosmo bandpass
     :rtype: sncosmo.Bandpass
     :raises ValueError: if the band cannot be resolved
     """
-    if isinstance(band, sncosmo.Bandpass):
-        return band
-    if isinstance(band, str) and band in _SNCOSMO_BANDPASS_CACHE:
-        return _SNCOSMO_BANDPASS_CACHE[band]
     try:
         sncosmo_name = get_sncosmo_filtername(band)
     except ValueError:
-        try:
-            return sncosmo.get_bandpass(band)
-        except Exception as exc:
-            raise ValueError(f"Band '{band}' is not recognized by sncosmo.") from exc
+        sncosmo_name = band
+
     try:
         return sncosmo.get_bandpass(sncosmo_name)
     except Exception:
+        pass
+
+    try:
         filter_response = get_speclite_filter(band)
-        bandpass = sncosmo.Bandpass(
-            filter_response.wavelength,
-            filter_response.response,
-            wave_unit="Angstrom",
-            name=sncosmo_name,
-        )
-        _SNCOSMO_BANDPASS_CACHE[band] = bandpass
-        _SNCOSMO_BANDPASS_CACHE[sncosmo_name] = bandpass
-        return bandpass
+    except ValueError as exc:
+        raise ValueError(f"Band '{band}' is not recognized by sncosmo.") from exc
+
+    bandpass = sncosmo.Bandpass(
+        filter_response.wavelength,
+        filter_response.response,
+        wave_unit="Angstrom",
+        name=sncosmo_name,
+    )
+    sncosmo.register(bandpass, name=sncosmo_name, force=True)
+    return bandpass

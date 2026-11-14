@@ -5,41 +5,21 @@ The band helpers are re-exported here for backward compatibility.
 """
 
 import slsim.Util.bandpass as bandpass
-
-_BANDPASS_REEXPORTS = {
-    "EUCLID_BAND_LIST",
-    "LSST_BAND_LIST",
-    "ROMAN_BAND_LIST",
-    "_ADDITIONAL_BAND_EFFECTIVE_WAVELENGTH_MICRON",
-    "_OBSERVATORY_REGISTRY",
-    "check_speclite_name",
-    "get_all_supported_bands",
-    "get_band_central_wavelength",
-    "get_band_effective_wavelength",
-    "get_band_log_wavelength_ratio",
-    "get_observatory",
-    "get_sncosmo_filtername",
-    "get_speclite_filtername",
-    "get_speclite_filternames",
-    "register_observatory",
-}
-
-
-__all__ = sorted(
-    {"kwargs_single_band"}
-    | {name for name in _BANDPASS_REEXPORTS if not name.startswith("_")}
+from slsim.Util.bandpass import (  # noqa: F401
+    EUCLID_BAND_LIST,
+    LSST_BAND_LIST,
+    ROMAN_BAND_LIST,
+    check_speclite_name,
+    get_all_supported_bands,
+    get_band_central_wavelength,
+    get_band_effective_wavelength,
+    get_band_log_wavelength_ratio,
+    get_observatory,
+    get_sncosmo_filtername,
+    get_speclite_filtername,
+    get_speclite_filternames,
+    register_observatory,
 )
-
-
-def __getattr__(name):
-    """Delegate band helpers to :mod:`slsim.Util.bandpass`."""
-    if name in _BANDPASS_REEXPORTS:
-        return getattr(bandpass, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
-def __dir__():
-    return sorted(set(globals()) | _BANDPASS_REEXPORTS)
 
 
 def kwargs_single_band(band, observatory=None, **kwargs):
