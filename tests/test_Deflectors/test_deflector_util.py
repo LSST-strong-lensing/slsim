@@ -2,6 +2,14 @@ from slsim.Deflectors import deflector_util
 from slsim.Deflectors.deflector import Deflector
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
+from slsim.Deflectors.deflector_util import (
+    critical_curves_caustics_list,
+)
+from slsim.Deflectors.DeflectorPopulation.generate_cluster_deflectors import (
+    GeneratedDeflector,
+)
+import slsim.Pipelines as pipelines
+from astropy.units import Quantity
 
 
 def test_deflector_from_table():
@@ -113,3 +121,32 @@ def test_light2mass_rejects_invalid_double_sersic_light_shapes():
             mass_type="EPL",
             halo_dict={"theta_E": 1, "gamma_pl": 2},
         )
+
+
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+sky_area = Quantity(value=0.001, unit="deg2")
+galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
+    skypy_config=None,
+    sky_area=sky_area,
+    filters=None,
+)
+deflector = GeneratedDeflector(5 * 10**14, 0.35, cosmo).get_deflector(
+    galaxy_simulation_pipeline.red_galaxies, galaxy_simulation_pipeline.blue_galaxies
+)
+
+
+def test_critical_curves_caustics():
+    ra_crit_list, dec_crit_list, ra_caustic_list, dec_caustic_list = (
+        critical_curves_caustics_list(
+            deflector,
+            10,
+            None,
+            compute_window=40,
+            grid_scale=1.0,
+        )
+    )
+
+    assert len(ra_crit_list) > 0
+    assert len(dec_crit_list) > 0
+    assert len(ra_caustic_list) > 0
+    assert len(dec_caustic_list) > 0

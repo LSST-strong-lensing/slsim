@@ -95,6 +95,13 @@ class TestSkyPyPipeline(object):
         assert len(pipeline2.red_galaxies["z"]) > 0
         assert len(pipeline3.red_galaxies["z"]) > 0
 
+    def test_all_galaxies(self):
+        blue_galaxies = self.pipeline.blue_galaxies
+        red_galaxies = self.pipeline.red_galaxies
+        all_galaxies = self.pipeline.all_galaxies
+
+        assert len(all_galaxies) == len(red_galaxies) + len(blue_galaxies)
+
     def test_redshift_range(self, skypy_pipeline):
         blue_galaxies = skypy_pipeline.blue_galaxies
         red_galaxies = skypy_pipeline.red_galaxies
