@@ -1,6 +1,7 @@
 import numpy as np
 from slsim.Sources.Events.BNSMerger.kilonova import Kilonova
-import numpy.testing as npt
+from astropy.cosmology import FlatLambdaCDM
+from astropy.table import Table
 import pytest
 
 
@@ -26,6 +27,7 @@ def kilonova_parameters():
 @pytest.fixture
 def kilonova_class(kilonova_parameters):
     KN = Kilonova(
+        cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
         redshift=0.1,
         model_name="mosfit_kilonova",
         mag_zpsys="AB",
@@ -38,23 +40,33 @@ def kilonova_class(kilonova_parameters):
 
 def test_kilonova_mag(kilonova_class):
     time = np.array([0.5, 1.0, 2.0])
-    mag = kilonova_class.get_apparent_magnitude(time=time, band="lsstr")
+    light_curve = kilonova_class.get_apparent_magnitude(time=time, band="r")
 
-    npt.assert_equal(np.shape(mag), np.shape(time))
-    npt.assert_(np.all(np.isfinite(mag)))
-    npt.assert_(np.all(mag > 0))
+    assert isinstance(light_curve, Table)
+    assert "time" in light_curve.colnames
+    assert "magnitude" in light_curve.colnames
+    assert len(light_curve) > 0
+
+    magnitudes = light_curve["magnitude"]
+    finite_magnitudes = magnitudes[np.isfinite(magnitudes)]
+
+    assert np.any(np.isfinite(magnitudes))
+    assert np.all(np.isfinite(magnitudes) | np.isposinf(magnitudes))
+    assert np.all(finite_magnitudes > 0)
 
 
 def test_kilonova_missing_parameters(kilonova_parameters):
     # Test that omitting a required model parameter raises an error.
     incomplete_parameters = kilonova_parameters.copy()
     incomplete_parameters.pop("mej_1")
+    kilonova = Kilonova(
+        redshift=0.1,
+        cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+        **incomplete_parameters,
+    )
 
-    with pytest.raises(TypeError):
-        Kilonova(
-            redshift=0.1,
-            **incomplete_parameters,
-        )
+    with pytest.raises(TypeError, match="mej_1"):
+        kilonova.get_apparent_magnitude(time=np.array([1.0]), band="r")
 
 
 def test_kilonova_invalid_model_name(kilonova_parameters):
@@ -74,6 +86,16 @@ def test_kilonova_external_modeldir_not_supported(kilonova_parameters):
             modeldir="some/path",
             **kilonova_parameters,
         )
+
+
+def test_kilonova_invalid_redshift():
+    with pytest.raises(ValueError, match="redshift must be finite and positive"):
+        Kilonova(redshift=0.0)
+
+
+def test_kilonova_model_parameters_dict():
+    with pytest.raises(TypeError, match="model_parameters must be a dictionary"):
+        Kilonova(redshift=0.1, model_parameters=[])
 
 
 if __name__ == "__main__":

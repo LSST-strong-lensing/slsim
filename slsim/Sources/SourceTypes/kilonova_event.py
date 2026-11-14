@@ -4,7 +4,6 @@ from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Sources.Events.BNSMerger.kilonova import Kilonova
 from slsim.ImageSimulation.image_quality_lenstronomy import (
     get_all_supported_bands,
-    get_sncosmo_filtername,
 )
 
 
@@ -30,9 +29,9 @@ class KilonovaEvent(SourceBase):
             input for the Variability class.
         :type variability_model: str
         :param model_name: Kilonova light curve model to be used. If not provided, the
-            default model is the MOSFiT-based kilonova model.
+            default model is the mosfit_kilonova.
         :type model_name: str
-        :param mag_zpsys: Optional, AB or Vega (AB default).
+        :param mag_zpsys: Optional, AB is default.
         :type mag_zpsys: str
         :param modeldir: Directory including files for external kilonova models. This
             option is currently not supported.
@@ -61,7 +60,6 @@ class KilonovaEvent(SourceBase):
         self._variability_computed = False
         self._kwargs_variability = kwargs_variability
         self._lightcurve_time = lightcurve_time
-
         self._model_name = model_name
         self._mag_zpsys = mag_zpsys
         self._modeldir = modeldir
@@ -88,8 +86,7 @@ class KilonovaEvent(SourceBase):
                     model_name=self._model_name,
                     mag_zpsys=self._mag_zpsys,
                     cosmo=self._cosmo,
-                    modeldir=self._modeldir,
-                    **self._kwargs_kilonova,
+                    model_parameters=self._kwargs_kilonova,
                 )
                 self._lightcurve_class = lightcurve_class
 
@@ -100,18 +97,17 @@ class KilonovaEvent(SourceBase):
                 name = "ps_mag_" + element
                 times = self._lightcurve_time
 
-                # Convert SLSim short band labels, such as "i" and "r", to registered
-                # filter names required by Redback, such as "lssti" and "lsstr".
-                # We reuse the existing SLSim/SNcosmo filter-name helper for this mapping.
-                provided_band = get_sncosmo_filtername(element)
+                # Filter handling is performed inside Kilonova.
+                provided_band = element
 
                 try:
-                    magnitudes = lightcurve_class.get_apparent_magnitude(
+                    light_curve_table = lightcurve_class.get_apparent_magnitude(
                         time=times,
                         band=provided_band,
-                        zpsys=self._mag_zpsys,
                     )
                     # make sure before and after the event, the flux is zero
+                    times = light_curve_table["time"]
+                    magnitudes = light_curve_table["magnitude"]
                     magnitudes = np.append(np.inf, magnitudes)
                     magnitudes = np.append(magnitudes, np.inf)
                     padded_times = np.append(times[0] - (times[1] - times[0]), times)

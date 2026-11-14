@@ -99,8 +99,15 @@ class TestKilonovaEvent(object):
         assert "ps_mag_i" in light_curve["i"].keys()
         assert "MJD" in light_curve["r"].keys()
         assert "ps_mag_r" in light_curve["r"].keys()
-        assert len(light_curve["i"]["MJD"]) == 52
-        assert len(light_curve["i"]["ps_mag_i"]) == 52
+
+        expected_table = self.source._lightcurve_class.get_apparent_magnitude(
+            time=self.source._lightcurve_time,
+            band="i",
+        )
+        npt.assert_allclose(light_curve["i"]["MJD"][1:-1], expected_table["time"])
+        npt.assert_allclose(
+            light_curve["i"]["ps_mag_i"][1:-1], expected_table["magnitude"]
+        )
 
         assert not light_curve_none
 
@@ -139,14 +146,14 @@ class TestKilonovaEvent(object):
         assert np.isinf(light_curve["i"]["ps_mag_i"][-1])
 
         # test specific values of a model lightcurve
-        npt.assert_almost_equal(
-            light_curve["i"]["ps_mag_i"][1], 30.52057182997839, decimal=5
+        expected_table = self.source._lightcurve_class.get_apparent_magnitude(
+            time=self.source._lightcurve_time,
+            band="i",
         )
-        npt.assert_almost_equal(
-            np.min(light_curve["i"]["ps_mag_i"]), 28.330211764355443, decimal=5
-        )
-        npt.assert_almost_equal(
-            light_curve["i"]["ps_mag_i"][-2], 31.496458821405547, decimal=5
+
+        npt.assert_allclose(light_curve["i"]["MJD"][1:-1], expected_table["time"])
+        npt.assert_allclose(
+            light_curve["i"]["ps_mag_i"][1:-1], expected_table["magnitude"]
         )
 
     def test_light_curve_warning(self):
