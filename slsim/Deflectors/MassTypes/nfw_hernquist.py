@@ -33,7 +33,7 @@ class NFWHernquist(MassBase):
         :param vel_disp: velocity dispersion [km/s], optional as pre-computed value.
          ATTENTION: consistency is not checked with mass profile.
         :param truncation_radius: if not None, uses the truncated nfw profile with this truncation radius. Ellipticity
-         is not supported. Value is in kpc (physical).
+         is supported but uses an elliptical potential. Value is in kpc (physical).
         :param gamma_in: if not None, uses the generalized nfw profile with this gamma. 1 corresponds to a regular
          NFW, with lower values being shallower. Ellipticity is supported through gaussian decomposition.
         """

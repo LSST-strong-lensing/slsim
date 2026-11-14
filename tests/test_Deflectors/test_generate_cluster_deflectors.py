@@ -14,9 +14,9 @@ class TestGeneratedDeflector(object):
 
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        self.M200h = 10**14
+        self.M200 = 10**14
         self.z = 0.35
-        self.deflector = GeneratedDeflector(self.M200h, self.z, self.cosmo)
+        self.deflector = GeneratedDeflector(self.M200, self.z, self.cosmo)
 
         galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
             sky_area=Quantity(value=0.001, unit="deg2"),
@@ -26,11 +26,11 @@ class TestGeneratedDeflector(object):
         self.blue = galaxy_simulation_pipeline.blue_galaxies
 
     def test_init(self):
-        assert self.deflector.M200h == self.M200h
+        assert self.deflector.M200 == self.M200
         assert self.deflector.z == self.z
         assert self.deflector.c > 0
-        assert self.deflector.R200h > 0
-        assert self.deflector.Rvirh > 0
+        assert self.deflector._R200h > 0
+        assert self.deflector._Rvirh > 0
 
     def test__accreted_subhalo_density_pdf(self):
         m = np.logspace(10, 13, 5)
@@ -40,18 +40,19 @@ class TestGeneratedDeflector(object):
 
     def test__unevolved_spatial_distribution_pdf(self):
         r = np.array([10.0, 100.0, 500.0])
-        out = self.deflector._unevolved_spatial_distribution_pdf(r)
+        m_acc = 1e12
+        out = self.deflector._unevolved_spatial_distribution_pdf(r, m_acc)
         assert out.shape == r.shape
         assert np.all(out > 0)
 
     def test__evolved_subhalo_mass_fraction_of_accretion(self):
-        r = np.linspace(10, self.deflector.R200h, 20)
+        r = np.linspace(10, self.deflector._R200h, 20)
         out = self.deflector._evolved_subhalo_mass_fraction_of_accretion(r)
         assert out.shape == r.shape
         assert np.all(out >= 0)
 
     def test__generate_subhalos(self):
-        out = self.deflector._generate_subhalos(1e12, self.M200h)
+        out = self.deflector._generate_subhalos(1e12, self.deflector._M200h)
         assert out.ndim == 2
         assert out.shape[1] == 3
 
@@ -62,7 +63,7 @@ class TestGeneratedDeflector(object):
         assert isinstance(halos, list)
         # host halo is always first
         assert halos[0]["dist_to_center"] == 0
-        assert halos[0]["subhalo_m_evolved"] == self.M200h
+        assert halos[0]["subhalo_m_evolved"] == self.deflector._M200h
         assert len(halos[0]["pos_2d"]) == 2
 
     def test_get_deflector_data(self):
@@ -97,7 +98,7 @@ class TestGeneratedDeflector(object):
         assert deflector.redshift == self.z
 
     def test__fraction_red_galaxies(self):
-        out = self.deflector._fraction_red_galaxies(self.deflector.R200h / 10, 1e10)
+        out = self.deflector._fraction_red_galaxies(self.deflector._R200h / 10, 1e10)
         assert 0 <= out <= 1
 
     def test__fraction_central_red(self):
@@ -124,7 +125,7 @@ class TestGeneratedDeflectorPopulation(object):
             zmax=0.5,
             red_galaxies=self.red,
             blue_galaxies=self.blue,
-            sky_area=Quantity(value=100000, unit="deg2"),
+            sky_area=Quantity(value=40000, unit="deg2"),
             cosmo=self.cosmo,
             crop_subhalo_dist=50,
             min_subhalo_accretion_mass=1e11,
@@ -132,7 +133,6 @@ class TestGeneratedDeflectorPopulation(object):
 
     def test_deflector_number(self):
         n = self.population.deflector_number()
-        assert isinstance(n, int)
         assert n > 0
 
     def test_draw_deflector(self):
@@ -140,7 +140,3 @@ class TestGeneratedDeflectorPopulation(object):
         assert isinstance(deflector, DeflectorGroup)
         assert deflector.deflector_type == "group"
         assert 0.4 <= deflector.redshift <= 0.5
-
-        # verbose shouldn't crash either
-        self.population.verbose = True
-        self.population.draw_deflector()

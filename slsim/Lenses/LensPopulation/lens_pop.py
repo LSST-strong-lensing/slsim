@@ -126,7 +126,7 @@ class LensPop(LensedPopulationBase):
         requirements. Can be used to find systems with either multiply imaged
         sources or with giant arcs.
 
-        To find systems with multiply images sources, min_num_images
+        To find systems with multiply imaged sources, min_num_images
         must be specified as well as optionally min_image_separation.
 
         To find systems with giant arcs, min_arc_length must be
@@ -139,7 +139,7 @@ class LensPop(LensedPopulationBase):
         :type min_num_sources: int
         :param min_image_separation: Minimum image separation in arcsecs
             for multiply lensed sources. min_num_images must be
-            specified or this won't do anything.
+            specified
         :type min_image_separation: int
         :param min_num_images: Minimum number of images for a source,
             default 1
@@ -174,7 +174,7 @@ class LensPop(LensedPopulationBase):
                 create_field_galaxies=True,
             )
 
-            # Field galaxies removed
+            # Field galaxies removed by create_field_galaxies
             source = test_lens._source
 
             images = trace_finite_source_images(

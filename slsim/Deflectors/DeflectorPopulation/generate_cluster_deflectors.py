@@ -21,9 +21,13 @@ Relations are given from Zheng et al. 2025
 
 7. The closest matching red / blue galaxy in terms of stellar mass and redshift is then selected from the skypy catalog
 
-TODO better truncation radius, eccentricity for subhalos, better HOD model,
-more accurate subhalo evolution (update concentration parameter or GBNFW. also orphan galaxies may be a numerical artifact
-from DM simulations), baryonic effects
+TODO
+More accurate subhalo evolution (update concentration parameter or GBNFW, see if orphan galaxies necessary)
+Redshift dependence
+Better truncation radius
+Better HOD model (morphology)
+Ellipticity in subhalos, more realistic correlation between satellites and subhalos 
+Baryonic effects
 
 References:
 Han et al. (2016): https://academic.oup.com/mnras/article/457/2/1208/965286
@@ -63,9 +67,9 @@ class GeneratedDeflector:
         :param verbose: verbose
         """
 
-        self.verbose = verbose
+        self._verbose = verbose
 
-        self.cosmo_col = set_colossus_cosmo(cosmo)
+        set_colossus_cosmo(cosmo)
 
         M200h = M200 * cosmo.h
 
@@ -74,39 +78,42 @@ class GeneratedDeflector:
             mean=np.log(c), sigma=0.33
         )  # concentration distribution 0.16 dex
         self.c = c
-        self.p_nfw = profile_nfw.NFWProfile(M=M200h, c=c, z=z, mdef="200c")
+        self._p_nfw = profile_nfw.NFWProfile(M=M200h, c=c, z=z, mdef="200c")
 
-        self.M200h = M200h  # solar masses / h
-        self.R200h = self.p_nfw.RDelta(z, "200c")  # kpc / h
-        self.Rvirh = self.p_nfw.RDelta(z, "vir")  # kpc / h
+        self.M200 = M200 # solar masses
+        self._M200h = M200h  # solar masses / h
+        self._R200h = self._p_nfw.RDelta(z, "200c")  # kpc / h
+        self.R200 = self._R200h / cosmo.h
+        self._Rvirh = self._p_nfw.RDelta(z, "vir")  # kpc / h
+        self.Rvir = self._Rvirh / cosmo.h
 
         self.z = z
         self.cosmo = cosmo
-        self.angular_diameter_dist = cosmo.angular_diameter_distance(self.z).to_value(
+        self._angular_diameter_dist = cosmo.angular_diameter_distance(self.z).to_value(
             "kpc"
         )  # distance corresponding to 1 radian
 
-        self.mean_position_angle = np.random.rand() * 2 * np.pi
+        self._mean_position_angle = np.random.rand() * 2 * np.pi
 
         mean_ellipticity_host = max(  # mass physical
-            0.23, 0.094 * np.log10(self.M200h / self.cosmo.h) - 0.95
+            0.23, 0.094 * np.log10(self._M200h / self.cosmo.h) - 0.95
         )
-        self.ellipticity_host = truncnorm.rvs(  # 1 - q
+        self._ellipticity_host = truncnorm.rvs(  # 1 - q
             (0.0 - mean_ellipticity_host) / 0.13,
             (0.9 - mean_ellipticity_host) / 0.13,
             loc=mean_ellipticity_host,
             scale=0.13,
         )
 
-        if self.verbose:
+        if self._verbose:
             print(
-                f"M200: {np.log10(self.M200h / self.cosmo.h):.4g} (physical), z: {self.z:.4g}"
+                f"M200: {np.log10(self._M200h / self.cosmo.h):.4g} (physical), z: {self.z:.4g}"
             )
             print(
-                f"R200: {(self.R200h / self.cosmo.h):.4g} kpc, projected {self.R200h / self.cosmo.h / self.angular_diameter_dist * 206265:.4g} arcsec"
+                f"R200: {(self._R200h / self.cosmo.h):.4g} kpc, projected {self._R200h / self.cosmo.h / self._angular_diameter_dist * 206265:.4g} arcsec"
             )
             print(f"host concentration: {self.c:.4g}")
-            print(f"host ellipticity: {1 - self.ellipticity_host:.4g} (q)")
+            print(f"host ellipticity: {1 - self._ellipticity_host:.4g} (q)")
 
         self._halos = None
 
@@ -124,28 +131,31 @@ class GeneratedDeflector:
         b = 7.6
         beta = 2.1
 
-        mu = m_acc_h / self.M200h
+        mu = m_acc_h / self._M200h
 
         return (a1 * mu**-al1 + a2 * mu**-al2) * np.exp(-b * mu**beta)
 
     def _unevolved_spatial_distribution_pdf(self, r, m_acc):
         """Given an accretion mass, returns the evolved spatial distribution
-        pdf with respect to r. This was fit empirically from the Symphony
-        simulations, figure 8 Han 2016 model places all subhalos tracing the
-        host density, with massive satellites are more centrally concentrated.
+        pdf dN / dr. This was fit empirically from the Symphony
+        simulations (Nadler et al. table 8).
+        More massive satellites are more centrally concentrated.
 
         r: distance to center [kpc / h]
         m_acc_h: accretion subhalo mass [solar masses / h]
         """
 
-        mu = -np.log10(m_acc / self.M200h)
+        mu = -np.log10(m_acc / self._M200h)
         mu = np.clip(mu, 0, 3)
 
-        r_f = r / self.Rvirh
+        r_f = r / self._Rvirh
         ln_rf = np.log(r_f)
 
-        A = 0.914 * (1 - np.exp(-1.55 * mu**1.433))
-        B = 0.4885 * (1 - np.exp(-1.96 * mu**0.667))
+        A = 0.9929 * (1 - np.exp(-6.273 * mu**3.001))
+        B = 0.09677 * mu + 0.1838
+
+        #A = 0.9929 * (1 - np.exp(-12.31 * mu**2.288))
+        #B = 0.09677 * mu + 0.2032
 
         CDF = np.exp(A * ln_rf - B * ln_rf**2)
         PDF = CDF / r * (A - 2 * B * ln_rf)
@@ -158,14 +168,14 @@ class GeneratedDeflector:
         :param r: distance to halo center [kpc / h]
         """
 
-        M = self.M200h / 10**10
+        M = self._M200h / 10**10
 
         mustar = 0.5 * M**-0.03
         beta = 1.7 * M**-0.04
         sigma = 1.1
         fs = 0.55
 
-        mubar = mustar * (r / self.R200h) ** beta
+        mubar = mustar * (r / self._R200h) ** beta
         mu = np.random.lognormal(mean=np.log(mubar), sigma=sigma)
 
         return np.where(np.random.rand(*r.shape) < fs, mu, 0)  # 0 mass when stripped
@@ -183,7 +193,7 @@ class GeneratedDeflector:
 
         m_acc = np.logspace(np.log10(m_acc_min), np.log10(m_acc_max), num=N_MASS)
 
-        r = self.R200h * np.linspace(0.001, 1, N_RADIUS)  # TODO splashback radius
+        r = self._R200h * np.linspace(0.001, 1, N_RADIUS)  # TODO splashback radius
 
         # d3r = 4 / 3 * np.pi * (r[1:] ** 3 - r[:-1] ** 3)
         dr = r[1:] - r[:-1]
@@ -240,15 +250,15 @@ class GeneratedDeflector:
         """
 
         if min_subhalo_accretion_mass is None:
-            min_subhalo_accretion_mass = 10**-3 * self.M200h
+            min_subhalo_accretion_mass = 10**-3 * self._M200h
 
         paramc, params = gals_init()
 
         # central halo first
         halos = np.vstack(
             (
-                np.array([[self.M200h, self.M200h, 0]]),
-                self._generate_subhalos(min_subhalo_accretion_mass, self.M200h),
+                np.array([[self._M200h, self._M200h, 0]]),
+                self._generate_subhalos(min_subhalo_accretion_mass, self._M200h),
             )
         )
 
@@ -278,19 +288,19 @@ class GeneratedDeflector:
                 pos[:2]
                 * dist_to_center
                 / self.cosmo.h
-                / self.angular_diameter_dist
+                / self._angular_diameter_dist
                 * 206265
             )  # 2d coordinate in arcsecs
 
             # adjust for ellipticity, radius same
-            pos_2d[0] *= np.sqrt(1 - self.ellipticity_host)
-            pos_2d[1] /= np.sqrt(1 - self.ellipticity_host)
+            pos_2d[0] *= np.sqrt(1 - self._ellipticity_host)
+            pos_2d[1] /= np.sqrt(1 - self._ellipticity_host)
 
             pos_2d = [  # not sure why this has to be negative
-                pos_2d[0] * np.cos(-self.mean_position_angle)
-                - pos_2d[1] * np.sin(-self.mean_position_angle),
-                pos_2d[0] * np.sin(-self.mean_position_angle)
-                + pos_2d[1] * np.cos(-self.mean_position_angle),
+                pos_2d[0] * np.cos(-self._mean_position_angle)
+                - pos_2d[1] * np.sin(-self._mean_position_angle),
+                pos_2d[0] * np.sin(-self._mean_position_angle)
+                + pos_2d[1] * np.cos(-self._mean_position_angle),
             ]
 
             if math.hypot(*pos_2d) > crop_subhalo_dist:
@@ -314,7 +324,7 @@ class GeneratedDeflector:
 
             # random position angle of the galaxy light, used for its eccentricity
             light_position_angle = np.random.normal(
-                loc=self.mean_position_angle, scale=35.4 * np.pi / 180
+                loc=self._mean_position_angle, scale=35.4 * np.pi / 180
             )
 
             halo_data.append(
@@ -362,8 +372,8 @@ class GeneratedDeflector:
             )
 
         halo_data = self._halos
-        ellipticity_host = self.ellipticity_host
-        mean_position_angle = self.mean_position_angle
+        ellipticity_host = self._ellipticity_host
+        mean_position_angle = self._mean_position_angle
 
         light_dicts = []
         mass_dicts = []
@@ -409,9 +419,7 @@ class GeneratedDeflector:
                 light_dict = dict(blue_galaxies[closest_real_galaxy_index])
 
             del light_dict["z"]
-            light_dict["extended_source_type"] = (
-                "single_sersic"  # TODO hernquist or sersic better
-            )
+            light_dict["extended_source_type"] = "single_sersic"
             light_dict["n_sersic"] = 4  # TODO elliptical / spiral
 
             # eccentricity
@@ -433,16 +441,11 @@ class GeneratedDeflector:
                 }
 
                 if dist_to_center != 0:  # subhalo
-                    # if subhalo_profile == "TNFW":
                     mass_dict["truncation_radius"] = (
                         1.4
                         * (subhalo_m_evolved / self.cosmo.h / 10**7) ** (1 / 3)
                         * (dist_to_center / self.cosmo.h / 50) ** (2 / 3)
                     )
-                    # elif subhalo_profile == "GBNFW":
-                    #    raise ValueError()  # TODO
-                    # else:
-                    #    raise ValueError()
                 else:  # host halo
                     # galaxy_projected_eccentricity wants (1 - q^2) / (1 + q^2)
                     e1, e2 = galaxy_projected_eccentricity(
@@ -514,11 +517,11 @@ class GeneratedDeflector:
         paramc, params = gals_init()
 
         central_stellar_mass = stellarmass_halomass(
-            self.M200h, self.z, paramc
+            self._M200h, self.z, paramc
         )  # solar masses / h
 
-        log_Mc = np.log10(central_stellar_mass)
-        log_Ms = np.log10(m)
+        log_Mc = np.clip(np.log10(central_stellar_mass), 0, 13)
+        log_Ms = np.clip(np.log10(m), 0, 11.2)
 
         A1 = 0.09
         eta1 = 1.07
@@ -531,7 +534,7 @@ class GeneratedDeflector:
         A = 1.0 - A1 * (13.0 - log_Mc) ** eta1 * (11.2 - log_Ms) ** nu1
         k = -A2 * (13.0 - log_Mc) ** eta2 * (11.2 - log_Ms) ** nu2
 
-        return np.where(log_Ms > 11.2, 1, np.clip(A * (r / self.Rvirh) ** k, 0, 1))
+        return np.where(log_Ms > 11.2, 1, np.clip(A * (r / self._Rvirh) ** k, 0, 1))
 
     def _fraction_central_red(self, central_stellar_mass):
         """Probability that central galaxy is red. Zheng 2025.
@@ -563,6 +566,8 @@ class GeneratedDeflectorPopulation:
         verbose=False,
     ):
         """
+        Samples from the halo mass function from Mmin to Mmax and zmin to zmax and creates a population of GeneratedDeflectors 
+        
         :param Mmin: Minimum host halo mass (physical)
         :param Mmax: Maximum host halo mass (physical)
         :param zmin: min redshift
@@ -572,7 +577,7 @@ class GeneratedDeflectorPopulation:
         :param sky_area: sky area over which to draw deflectors, set very high to get a realistic population
         :type sky_area: astropy.Quantity
         :param cosmo: astropy cosmology instance
-        :param crop_subhalo_dist: maximum distance in arcsecs from the center that satellites will be generated
+        :param crop_subhalo_dist: maximum distance in arcsecs from the center that satellites will be generated, set to your render radius
         :param min_subhalo_accretion_mass: minimum mass of accreted subhalos to sample (solar masses / h). Default 10^-3 times the host halo mass, but can be set explicitly if generating smaller groups
         :param verbose: verbose
         """
@@ -610,6 +615,25 @@ class GeneratedDeflectorPopulation:
                 if count > 0:
                     self.deflectors += [(m_h / cosmo.h, z)] * count
 
+    def get_generateddeflector_object(self):
+        """Draw a random deflector.
+
+        Returns GeneratedDeflector object, to get a slsim deflector call draw_deflector on this class or get_deflector on the object
+
+        :param kwargs_host_mass: Specifying
+            kwargs_host_mass={"gamma_in": gamma} makes the host halo a
+            GNFW profile. gamma=1 corresponds to NFW, with lower values
+            being shallower.
+        """
+        
+        M, z = random.choice(self.deflectors)
+
+        if self.verbose:
+            print(f"Drew log10(M200) {np.log10(M):.4f} z {z:.4f}")
+
+        generated_deflector = GeneratedDeflector(M, z, self.cosmo, verbose=self.verbose)
+        return generated_deflector
+
     def draw_deflector(self, kwargs_host_mass=None):
         """Draw a random deflector.
 
@@ -621,14 +645,7 @@ class GeneratedDeflectorPopulation:
             being shallower.
         """
 
-        M, z = random.choice(self.deflectors)
-
-        if self.verbose:
-            print(f"Drew log10(M200) {np.log10(M):.4f} z {z:.4f}")
-
-        generated_deflector = GeneratedDeflector(M, z, self.cosmo, verbose=self.verbose)
-
-        return generated_deflector.get_deflector(
+        return self.get_generateddeflector_object().get_deflector(
             self.red_galaxies,
             self.blue_galaxies,
             crop_subhalo_dist=self.crop_subhalo_dist,
@@ -637,6 +654,6 @@ class GeneratedDeflectorPopulation:
         )
 
     def deflector_number(self):
-        """Returns the number of distinct deflectors in the population."""
+        """Returns the number of distinct deflectors in the population"""
 
         return len(self.deflectors)

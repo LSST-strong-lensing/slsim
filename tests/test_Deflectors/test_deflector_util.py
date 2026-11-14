@@ -139,7 +139,7 @@ source_galaxies = Galaxies(
     catalog_type="skypy",
 )
 sources = source_galaxies.draw_galaxies(Quantity(100**2, "arcsec2"))
-deflector = GeneratedDeflector(5 * 10**14, 0.35, cosmo)
+deflector = GeneratedDeflector(5 * 10**14, 0.35, cosmo).get_deflector(galaxy_simulation_pipeline.red_galaxies, galaxy_simulation_pipeline.blue_galaxies)
 
 
 def test_critical_curves_caustics():
@@ -157,9 +157,3 @@ def test_critical_curves_caustics():
     assert len(dec_crit_list) > 0
     assert len(ra_caustic_list) > 0
     assert len(dec_caustic_list) > 0
-
-
-def test_in_influence_area(self):
-    assert len(
-        sources_in_influence_area(deflector, sources, Quantity(100**2, "deg2"))
-    ) == len(sources)

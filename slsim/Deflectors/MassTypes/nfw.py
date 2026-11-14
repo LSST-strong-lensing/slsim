@@ -29,7 +29,7 @@ class NFW(MassBase):
         :param vel_disp: velocity dispersion [km/s], optional as pre-computed value.
          ATTENTION: consistency is not checked with mass profile.
         :param truncation_radius: if not None, uses the truncated nfw profile with this truncation radius. Ellipticity
-         is not supported. Value is in kpc (physical).
+         is supported but uses an elliptical potential. Value is in kpc (physical).
         :param gamma_in: if not None, uses the generalized nfw profile with this gamma. 1 corresponds to a regular
          NFW, with lower values being shallower. Ellipticity is supported through gaussian decomposition.
         """
@@ -74,7 +74,10 @@ class NFW(MassBase):
             _spherical = False
 
         if self._truncation_radius is not None:
-            lens_mass_model_list = ["TNFW"]
+            if _spherical is True:
+                lens_mass_model_list = ["TNFW"]
+            else:
+                lens_mass_model_list = ["TNFW_ELLIPSE_POTENTIAL"]
         elif self._gamma_in is not None:
             if _spherical is True:
                 lens_mass_model_list = ["GNFW"]
