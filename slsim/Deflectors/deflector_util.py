@@ -9,7 +9,6 @@ from colossus.cosmology import cosmology as colossus_cosmo
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LensModel.lens_model_extensions import LensModelExtensions
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-from matplotlib.path import Path
 
 
 def deflector_from_table(table, mass_type, extended_source_type, cosmo=None):

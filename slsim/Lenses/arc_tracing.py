@@ -28,7 +28,7 @@ def trace_finite_source_images(
     pix_width_fine=0.1,
     x_center=0,
     y_center=0,
-    cut=False,
+    cut=True,
     mag_per_arcsec2_cutoff=25,
     mag_band="F158",
     factor_coarse=12,

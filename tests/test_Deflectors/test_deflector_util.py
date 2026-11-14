@@ -4,7 +4,6 @@ from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
 from slsim.Deflectors.deflector_util import (
     critical_curves_caustics_list,
-    sources_in_influence_area,
 )
 from slsim.Deflectors.DeflectorPopulation.generate_cluster_deflectors import (
     GeneratedDeflector,
@@ -126,19 +125,12 @@ def test_light2mass_rejects_invalid_double_sersic_light_shapes():
 
 
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-sky_area = Quantity(value=0.01, unit="deg2")
+sky_area = Quantity(value=0.001, unit="deg2")
 galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
     skypy_config=None,
     sky_area=sky_area,
     filters=None,
 )
-source_galaxies = Galaxies(
-    galaxy_list=galaxy_simulation_pipeline.all_galaxies,
-    cosmo=cosmo,
-    sky_area=sky_area,
-    catalog_type="skypy",
-)
-sources = source_galaxies.draw_galaxies(Quantity(100**2, "arcsec2"))
 deflector = GeneratedDeflector(5 * 10**14, 0.35, cosmo).get_deflector(galaxy_simulation_pipeline.red_galaxies, galaxy_simulation_pipeline.blue_galaxies)
 
 
