@@ -10,7 +10,6 @@ from slsim.Deflectors.DeflectorPopulation.generate_cluster_deflectors import (
 )
 import slsim.Pipelines as pipelines
 from astropy.units import Quantity
-from slsim.Sources.SourcePopulation.galaxies import Galaxies
 
 
 def test_deflector_from_table():
