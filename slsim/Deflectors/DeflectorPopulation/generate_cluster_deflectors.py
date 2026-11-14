@@ -26,7 +26,7 @@ More accurate subhalo evolution (update concentration parameter or GBNFW, see if
 Redshift dependence
 Better truncation radius
 Better HOD model (morphology)
-Ellipticity in subhalos, more realistic correlation between satellites and subhalos 
+Ellipticity in subhalos, more realistic correlation between satellites and subhalos
 Baryonic effects
 
 References:
@@ -80,7 +80,7 @@ class GeneratedDeflector:
         self.c = c
         self._p_nfw = profile_nfw.NFWProfile(M=M200h, c=c, z=z, mdef="200c")
 
-        self.M200 = M200 # solar masses
+        self.M200 = M200  # solar masses
         self._M200h = M200h  # solar masses / h
         self._R200h = self._p_nfw.RDelta(z, "200c")  # kpc / h
         self.R200 = self._R200h / cosmo.h
@@ -137,9 +137,9 @@ class GeneratedDeflector:
 
     def _unevolved_spatial_distribution_pdf(self, r, m_acc):
         """Given an accretion mass, returns the evolved spatial distribution
-        pdf dN / dr. This was fit empirically from the Symphony
-        simulations (Nadler et al. table 8).
-        More massive satellites are more centrally concentrated.
+        pdf dN / dr. This was fit empirically from the Symphony simulations
+        (Nadler et al. table 8). More massive satellites are more centrally
+        concentrated.
 
         r: distance to center [kpc / h]
         m_acc_h: accretion subhalo mass [solar masses / h]
@@ -154,8 +154,8 @@ class GeneratedDeflector:
         A = 0.9929 * (1 - np.exp(-6.273 * mu**3.001))
         B = 0.09677 * mu + 0.1838
 
-        #A = 0.9929 * (1 - np.exp(-12.31 * mu**2.288))
-        #B = 0.09677 * mu + 0.2032
+        # A = 0.9929 * (1 - np.exp(-12.31 * mu**2.288))
+        # B = 0.09677 * mu + 0.2032
 
         CDF = np.exp(A * ln_rf - B * ln_rf**2)
         PDF = CDF / r * (A - 2 * B * ln_rf)
@@ -565,20 +565,26 @@ class GeneratedDeflectorPopulation:
         min_subhalo_accretion_mass=None,
         verbose=False,
     ):
-        """
-        Samples from the halo mass function from Mmin to Mmax and zmin to zmax and creates a population of GeneratedDeflectors 
-        
+        """Samples from the halo mass function from Mmin to Mmax and zmin to
+        zmax and creates a population of GeneratedDeflectors.
+
         :param Mmin: Minimum host halo mass (physical)
         :param Mmax: Maximum host halo mass (physical)
         :param zmin: min redshift
         :param zmax: max redshift
         :param red_galaxies: list of red galaxies from skypy
         :param blue_galaxies: list of blue galaxies from skypy
-        :param sky_area: sky area over which to draw deflectors, set very high to get a realistic population
+        :param sky_area: sky area over which to draw deflectors, set
+            very high to get a realistic population
         :type sky_area: astropy.Quantity
         :param cosmo: astropy cosmology instance
-        :param crop_subhalo_dist: maximum distance in arcsecs from the center that satellites will be generated, set to your render radius
-        :param min_subhalo_accretion_mass: minimum mass of accreted subhalos to sample (solar masses / h). Default 10^-3 times the host halo mass, but can be set explicitly if generating smaller groups
+        :param crop_subhalo_dist: maximum distance in arcsecs from the
+            center that satellites will be generated, set to your render
+            radius
+        :param min_subhalo_accretion_mass: minimum mass of accreted
+            subhalos to sample (solar masses / h). Default 10^-3 times
+            the host halo mass, but can be set explicitly if generating
+            smaller groups
         :param verbose: verbose
         """
 
@@ -618,14 +624,15 @@ class GeneratedDeflectorPopulation:
     def get_generateddeflector_object(self):
         """Draw a random deflector.
 
-        Returns GeneratedDeflector object, to get a slsim deflector call draw_deflector on this class or get_deflector on the object
+        Returns GeneratedDeflector object, to get a slsim deflector call
+        draw_deflector on this class or get_deflector on the object
 
         :param kwargs_host_mass: Specifying
             kwargs_host_mass={"gamma_in": gamma} makes the host halo a
             GNFW profile. gamma=1 corresponds to NFW, with lower values
             being shallower.
         """
-        
+
         M, z = random.choice(self.deflectors)
 
         if self.verbose:
@@ -654,6 +661,6 @@ class GeneratedDeflectorPopulation:
         )
 
     def deflector_number(self):
-        """Returns the number of distinct deflectors in the population"""
+        """Returns the number of distinct deflectors in the population."""
 
         return len(self.deflectors)

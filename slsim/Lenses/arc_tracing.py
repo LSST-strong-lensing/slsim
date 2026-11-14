@@ -22,6 +22,7 @@ from slsim.Lenses.lens import Lens
 # the coarse pass looks this many times further out from the source than the images are traced so thin images arent missed
 _COARSE_FACTOR = 2
 
+
 def trace_finite_source_images(
     lens: Lens,
     search_window=40,
@@ -35,18 +36,26 @@ def trace_finite_source_images(
     factor_second=4,
     return_interior=False,
 ):
-    """Finds the outline of every source's images in the search window based on an intensity cutoff of mag_per_arcsec2_cutoff in mag_band.
+    """Finds the outline of every source's images in the search window based on
+    an intensity cutoff of mag_per_arcsec2_cutoff in mag_band.
 
-    First ray shoots a coarse grid to find roughly where the images of each source are. The first pass looks out to twice the radius the images are traced to so thin sources aren't missed. The coarse pixels it finds are divided into a smaller grid and ray shot again. Then starting from those points, each hit is expanded outwards until it finds the boundaries.
+    First ray shoots a coarse grid to find roughly where the images of
+    each source are. The first pass looks out to twice the radius the
+    images are traced to so thin sources aren't missed. The coarse
+    pixels it finds are divided into a smaller grid and ray shot again.
+    Then starting from those points, each hit is expanded outwards until
+    it finds the boundaries.
 
-    By default filters out small singly-imaged sources, set cut=False to find all images for all sources
+    By default filters out small singly-imaged sources, set cut=False to
+    find all images for all sources
 
     :param lens: slsim.Lens
     :param search_window: width of the square search window
     :param pix_width_fine: width of a fine pixel
     :param x_center: center of the search window
     :param y_center: center of the search window
-    :param cut: skip sources that have a single small image. Default True
+    :param cut: skip sources that have a single small image. Default
+        True
     :param mag_per_arcsec2_cutoff: images are traced out to where the
         source is this faint, in mag per arcsec^2
     :param mag_band: band in which intensity is calculated. Defaults to
@@ -54,11 +63,10 @@ def trace_finite_source_images(
     :param factor_coarse: width of a coarse pixel, in fine pixels, must
         be a multiple of factor_second
     :param factor_second: width of a second pass pixel, in fine pixels
-    :param return_interior: return the pixels inside each image instead of the outline
-
-    :return: list of lists of (X array, Y array), in arcsecs. These
-        are the traced outlines / interiors of every image for each
-        source.
+    :param return_interior: return the pixels inside each image instead
+        of the outline
+    :return: list of lists of (X array, Y array), in arcsecs. These are
+        the traced outlines / interiors of every image for each source.
     """
 
     lens_model, kwargs_lens = lens.deflector_mass_model_lenstronomy(
@@ -275,9 +283,10 @@ def trace_finite_source_images(
 
     return all_images
 
+
 def _sersic_params(sources, mag_zero_point):
     """Returns (n_sersic, r_eff, amp) arrays given light dicts of sersic
-    sources
+    sources.
 
     :param sources: list of (light_model_list, kwargs_light_mag) tuples
     :param mag_zero_point: scalar, or array-like with one zero point per
@@ -340,6 +349,7 @@ def dist_hlr(source, x, y):
     y = y / np.sqrt(q)
 
     return np.hypot(x, y) / source.angular_size
+
 
 def _find_midline(image, pix_width=0.1):
     """

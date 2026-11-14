@@ -131,7 +131,9 @@ galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
     sky_area=sky_area,
     filters=None,
 )
-deflector = GeneratedDeflector(5 * 10**14, 0.35, cosmo).get_deflector(galaxy_simulation_pipeline.red_galaxies, galaxy_simulation_pipeline.blue_galaxies)
+deflector = GeneratedDeflector(5 * 10**14, 0.35, cosmo).get_deflector(
+    galaxy_simulation_pipeline.red_galaxies, galaxy_simulation_pipeline.blue_galaxies
+)
 
 
 def test_critical_curves_caustics():

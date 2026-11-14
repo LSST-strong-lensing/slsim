@@ -88,7 +88,9 @@ class TestArcTracing(object):
             assert isinstance(X, np.ndarray)
             assert isinstance(Y, np.ndarray)
 
-        result = trace_finite_source_images(self.lens, search_window=20, mag_band="r", return_interior=True)
+        result = trace_finite_source_images(
+            self.lens, search_window=20, mag_band="r", return_interior=True
+        )
         assert isinstance(result, list)
         assert len(result) == 1  # one source
         assert isinstance(result[0], list)
