@@ -85,7 +85,7 @@ class TestSkyPyPipeline(object):
     def test_red_galaxies(self, skypy_pipeline, sky_area):
         red_galaxies = skypy_pipeline.red_galaxies
         assert red_galaxies[0]["z"] > 0
-        
+
         pipeline2 = SkyPyPipeline(skypy_config="lsst_like_old", sky_area=sky_area)
         path = os.path.dirname(__file__)
         new_path = path.replace("test_Pipelines", "TestData/")
@@ -94,7 +94,7 @@ class TestSkyPyPipeline(object):
         )
         assert len(pipeline2.red_galaxies["z"]) > 0
         assert len(pipeline3.red_galaxies["z"]) > 0
-        
+
     def test_all_galaxies(self):
         blue_galaxies = self.pipeline.blue_galaxies
         red_galaxies = self.pipeline.red_galaxies
