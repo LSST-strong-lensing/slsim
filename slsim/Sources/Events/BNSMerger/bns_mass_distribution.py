@@ -7,16 +7,23 @@ BNS mass distribution: Farrow, Zhu and Thrane 2019.
 
 
 class BNSMassDistribution(object):
-    """Assign neutron star(NS) masses to each event and calculate chirp mass and mass
-    ratio. All mass parameters are in solar mass."""
+    """Assign neutron star(NS) masses to each event and calculate chirp mass
+    and mass ratio.
+
+    All mass parameters are in solar mass.
+    """
 
     def __init__(self):
-        self._mu = np.array([1.34, 1.47]) # Means of the two Gaussian components for NS masses
-        self._sigma = np.array([0.02, 0.15]) # Standard deviations of the two Gaussian components
-        self._weight_1 = 0.68 # Weight of the first Gaussian component (dimensionless)
+        self._mu = np.array(
+            [1.34, 1.47]
+        )  # Means of the two Gaussian components for NS masses
+        self._sigma = np.array(
+            [0.02, 0.15]
+        )  # Standard deviations of the two Gaussian components
+        self._weight_1 = 0.68  # Weight of the first Gaussian component (dimensionless)
 
         # Bound for recycled neutron star masses which is the first-born neutron star
-        self._mr_min = 0.8 
+        self._mr_min = 0.8
         self._mr_max = 2.0
 
         # Bound for slow neutron star which is the second-born neutron star
