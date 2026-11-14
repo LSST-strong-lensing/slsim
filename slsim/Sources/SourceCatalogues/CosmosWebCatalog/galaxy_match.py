@@ -4,7 +4,7 @@ from astropy.table import Table
 from astropy.io import fits
 from astropy import units as u
 
-from slsim.ImageSimulation.image_quality_lenstronomy import (
+from slsim.Util.bandpass import (
     ROMAN_BAND_LIST,
     EUCLID_BAND_LIST,
     LSST_BAND_LIST,

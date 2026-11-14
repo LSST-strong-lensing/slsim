@@ -2,7 +2,7 @@ import warnings
 import numpy as np
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Sources.Events.BNSMerger.kilonova import Kilonova
-from slsim.ImageSimulation.image_quality_lenstronomy import (
+from slsim.Util.bandpass import (
     get_all_supported_bands,
     get_sncosmo_filtername,
 )

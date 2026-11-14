@@ -1,5 +1,7 @@
 import pytest
 import numpy as np
+
+import slsim.Util.bandpass as bandpass
 from slsim.ImageSimulation.image_quality_lenstronomy import (
     check_speclite_name,
     get_speclite_filtername,
@@ -295,6 +297,13 @@ def test_band_wavelength_helpers_cover_hst_and_custom_registry_fallback():
     )
     with pytest.raises(ValueError, match="effective wavelengths must be positive"):
         get_band_log_wavelength_ratio("NPW-band", reference_band="positive-band")
+
+
+def test_band_helpers_are_re_exported_from_image_module():
+    import slsim.ImageSimulation.image_quality_lenstronomy as iql
+
+    assert iql.get_speclite_filtername is bandpass.get_speclite_filtername
+    assert iql.register_observatory is bandpass.register_observatory
 
 
 if __name__ == "__main__":

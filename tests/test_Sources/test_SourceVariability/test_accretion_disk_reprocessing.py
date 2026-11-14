@@ -320,3 +320,12 @@ class TestAccretionDiskReprocessing:
                 mag_zero_point,
                 band=known_band,
             )
+
+        with pytest.raises(ValueError, match="Load the filter first"):
+            reprocessor.determine_agn_luminosity_from_known_luminosity(
+                "not_a_real_speclite_filter",
+                i_band_magnitude,
+                redshift,
+                mag_zero_point,
+                band=known_band,
+            )

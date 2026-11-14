@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from astropy import cosmology
 import slsim.ImageSimulation.image_quality_lenstronomy as iql
-from slsim.ImageSimulation.image_quality_lenstronomy import get_sncosmo_filtername
+from slsim.Util.bandpass import get_sncosmo_filtername
 
 
 class TestSupernovaEvent:

@@ -20,7 +20,7 @@ from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 from scipy.interpolate import RegularGridInterpolator
 
-from slsim.ImageSimulation.image_quality_lenstronomy import get_speclite_filternames
+from slsim.Util.bandpass import get_speclite_filternames
 
 """
 References:

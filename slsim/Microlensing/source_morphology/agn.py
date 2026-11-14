@@ -9,13 +9,11 @@ from slsim.Util.astro_util import (
 
 from astropy import units as u
 
-import speclite.filters
-
 from slsim.Microlensing.source_morphology.source_morphology import (
     SourceMorphology,
 )
 
-from slsim.ImageSimulation.image_quality_lenstronomy import get_speclite_filtername
+from slsim.Util.bandpass import get_speclite_filter
 
 
 class AGNSourceMorphology(SourceMorphology):
@@ -119,9 +117,7 @@ class AGNSourceMorphology(SourceMorphology):
 
         # Assign the observer frame wavelength in nm if the band is provided
         if self.observing_wavelength_band is not None:
-            filter_obj = speclite.filters.load_filter(
-                get_speclite_filtername(self.observing_wavelength_band)
-            )
+            filter_obj = get_speclite_filter(self.observing_wavelength_band)
             self.observer_frame_wavelength_in_nm = filter_obj.effective_wavelength.to(
                 u.nm
             ).value
