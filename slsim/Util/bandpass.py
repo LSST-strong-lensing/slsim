@@ -298,6 +298,11 @@ def get_band_effective_wavelength(band):
         return float(configured_wavelengths[band])
 
     filter_name = get_speclite_filtername(band)
+    if filter_name is None:
+        raise ValueError(
+            f"Band '{band}' has neither an explicitly configured effective "
+            f"wavelength nor a registered speclite filter response."
+        )
     response = speclite.filters.load_filter(filter_name)
     return float(response.effective_wavelength.to("micron").value)
 
