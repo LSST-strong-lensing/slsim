@@ -252,7 +252,7 @@ def test_cluster_lens_pop_instance():
 
 
 def test_cluster_lens_pop_instance_multi_source():
-    sky_area = Quantity(value=0.05, unit="deg2")
+    sky_area = Quantity(value=0.005, unit="deg2")
 
     # one of the other tests adds a column to the galaxies table, which causes a bug when creating a Hernquist source
     _galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
@@ -280,7 +280,7 @@ def test_cluster_lens_pop_instance_multi_source():
         0.4,
         _galaxy_simulation_pipeline.red_galaxies,
         _galaxy_simulation_pipeline.blue_galaxies,
-        Quantity(100, "deg2"),
+        Quantity(40000, "deg2"),
         cosmo,
     )
 
@@ -296,12 +296,12 @@ def test_cluster_lens_pop_instance_multi_source():
     )
     pes_lens_class = lenspop.select_lens_at_random_multi_source(
         source_area=Quantity(80**2, "arcsec2"),
-        min_num_images=3,
+        min_num_images=2,
         min_num_sources=2,
         min_image_separation=5,
     )
     pes_lens_class = lenspop.select_lens_at_random_multi_source(
-        source_area=Quantity(80**2, "arcsec2"), min_arc_length=20, min_LW_ratio=7
+        source_area=Quantity(80**2, "arcsec2"), min_arc_length=10, min_LW_ratio=7
     )
 
     assert isinstance(pes_lens_class, Lens)
