@@ -141,6 +141,7 @@ class TestEventLightcone(object):
         )
 
     def test_event_sample(self):
+        np.random.seed(42)
         lightcones = [
             (self.bns_lightcone, self.bns_pop),
             (self.sne_lightcone, self.sne_pop),
