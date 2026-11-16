@@ -56,6 +56,21 @@ class PointSources(SourcePopBase):
             point_source_type=point_source_type,
         )
 
+    def _source_from_point_object(self, point_source):
+        # per-object catalog values override the joint/population-level defaults
+        # on key collision, rather than raising (as a direct double-** unpack would)
+        merged_kwargs = {**self._joint_point_source_kwargs, **point_source}
+        return Source(
+            cosmo=self._cosmo,
+            point_source_type=self._point_source_type,
+            **merged_kwargs,
+        )
+
+    def _draw_source_at_selected(self, selected_index):
+        return self._source_from_point_object(
+            self._draw_selected_object(selected_index)
+        )
+
     def draw_source(self, z_max=None, z_min=None, object_index=None):
         """Choose source at random within the selected redshift range.
 
@@ -71,14 +86,4 @@ class PointSources(SourcePopBase):
         point_source = self.draw_object(
             z_max=z_max, z_min=z_min, galaxy_index=object_index
         )
-
-        # per-object catalog values override the joint/population-level defaults
-        # on key collision, rather than raising (as a direct double-** unpack would)
-        merged_kwargs = {**self._joint_point_source_kwargs, **point_source}
-        source_class = Source(
-            cosmo=self._cosmo,
-            point_source_type=self._point_source_type,
-            **merged_kwargs
-        )
-
-        return source_class
+        return self._source_from_point_object(point_source)

@@ -1,8 +1,18 @@
 import numpy as np
+from astropy import units as u
+from astropy.table import Table
+from lenstronomy.Util import constants
+
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.Sources.SourcePopulation.galaxies import convert_catalog_to_source
 from slsim.Deflectors.deflector import Deflector
 from slsim.Deflectors import deflector_util
+from slsim.Util.cosmo_util import get_cosmo_cache
+from slsim.Util.lenstronomy_util import theta_E_spherical_nfw_hernquist
+from slsim.Util.param_util import (
+    galaxy_size_redshift_evolution,
+    vel_disp_from_m_star,
+)
 
 
 class DeflectorsBase(Galaxies):
@@ -96,7 +106,10 @@ class DeflectorsBase(Galaxies):
         halo_gal = self.draw_object(
             z_max=z_max, z_min=z_min, galaxy_index=deflector_index
         )
+        return self._deflector_from_object(halo_gal)
 
+    def _deflector_from_object(self, halo_gal):
+        """Instantiate a ``Deflector`` from a single catalog entry."""
         kwargs_source = convert_catalog_to_source(
             galaxy=halo_gal,
             extended_source_type=self._extended_source_type,
@@ -115,10 +128,165 @@ class DeflectorsBase(Galaxies):
             kwargs_mass=kwargs_mass, kwargs_source=kwargs_source
         )
         z = kwargs_source.pop("z")
-        deflector_class = Deflector(
-            z=z, kwargs_mass=kwargs_mass, kwargs_light=kwargs_source
+        return Deflector(z=z, kwargs_mass=kwargs_mass, kwargs_light=kwargs_source)
+
+    def _draw_deflector_at_selected(self, selected_index):
+        """Instantiate a ``Deflector`` from an index in ``_objects_select``."""
+        return self._deflector_from_object(self._draw_selected_object(selected_index))
+
+    def _epl_theta_e_infinity(self, selected_indices):
+        """Compute vectorized EPL theta_e_infinity, or return None on
+        fallback."""
+        colnames = self._objects_select.colnames
+        if "vel_disp" in colnames:
+            v_sigma = np.asarray(
+                self._objects_select["vel_disp"][selected_indices], dtype=float
+            )
+        else:
+            use_interp = self._vel_disp_from_stellar_mass is not None
+            use_scaling = bool(
+                self._kwargs_mass2light.get("m_star_v_disp_scaling", False)
+            )
+            if not (use_interp or use_scaling) or "stellar_mass" not in colnames:
+                return None
+            stellar_mass = self._extract_positive_array(
+                "stellar_mass", selected_indices
+            )
+            if stellar_mass is None:
+                return None
+            v_sigma = (
+                np.asarray(
+                    self._vel_disp_from_stellar_mass(np.log10(stellar_mass)),
+                    dtype=float,
+                )
+                if use_interp
+                else np.asarray(vel_disp_from_m_star(stellar_mass), dtype=float)
+            )
+        if not np.all(np.isfinite(v_sigma)) or np.any(v_sigma < 0.0):
+            return None
+        return 4.0 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
+
+    def _extract_positive_array(self, colname, selected_indices, unit=None):
+        """Extract column slice as positive finite float array, else None."""
+        if colname not in self._objects_select.colnames:
+            return None
+        col = self._objects_select[colname][selected_indices]
+        arr = (
+            col.to_value(unit)
+            if unit is not None and isinstance(col, u.Quantity)
+            else np.asarray(col, dtype=float)
         )
-        return deflector_class
+        if not np.all(np.isfinite(arr)) or np.any(arr <= 0.0):
+            return None
+        return arr
+
+    def _nfw_angular_params(
+        self, selected_indices, cosmo_cache, z_arr, sigma_crit, dd_l
+    ):
+        """Return vectorized (Rs_nfw, alpha_Rs) at z_s=100, or None on
+        fallback."""
+        halo_mass = self._extract_positive_array("halo_mass", selected_indices)
+        concentration = self._extract_positive_array("concentration", selected_indices)
+        if halo_mass is None or concentration is None:
+            return None
+        h = float(cosmo_cache.cosmo.H(0).value) / 100.0
+        efunc_l = cosmo_cache.efunc(z_arr)
+        rhoc_z = 2.77536627e11 * efunc_l**2
+        r200 = (3.0 * halo_mass * h / (4.0 * np.pi * rhoc_z * 200.0)) ** (1.0 / 3.0) / h
+        rho0 = (
+            200.0
+            / 3.0
+            * rhoc_z
+            * concentration**3
+            / (np.log(1.0 + concentration) - concentration / (1.0 + concentration))
+            * h**2
+        )
+        rs_phys = r200 / concentration
+        rs_nfw = rs_phys / dd_l / constants.arcsec
+        alpha_rs = (
+            rho0
+            * (4.0 * rs_phys**2 * (1.0 + np.log(0.5)))
+            / (sigma_crit * dd_l * constants.arcsec)
+        )
+        return rs_nfw, alpha_rs
+
+    def _hernquist_angular_params(self, selected_indices, z_arr, sigma_crit, dd_l):
+        """Return vectorized (Rs_hern, sigma0) at z_s=100, or None on
+        fallback."""
+        if self._extended_source_type not in (
+            "single_sersic",
+            "hernquist",
+            "catalog_source",
+        ) or (self._size_model == "Bernardi" and self._catalog_type == "skypy"):
+            return None
+        stellar_mass = self._extract_positive_array("stellar_mass", selected_indices)
+        if stellar_mass is None:
+            return None
+
+        ang_size = self._extract_positive_array(
+            "angular_size", selected_indices, unit=u.arcsec
+        )
+        if ang_size is None:
+            phys_kpc = self._extract_positive_array(
+                "physical_size", selected_indices, unit=u.kpc
+            )
+            if phys_kpc is None:
+                return None
+            ang_size = (phys_kpc / (dd_l * 1000.0)) / constants.arcsec
+        if self._catalog_type == "skypy":
+            ang_size = ang_size * (galaxy_size_redshift_evolution(z_arr) / 2.5)
+        rs_hern = ang_size / 1.815
+        rs_phys = dd_l * rs_hern * constants.arcsec
+        sigma0 = (stellar_mass / (2.0 * np.pi * rs_phys**2)) / sigma_crit
+        return rs_hern, sigma0
+
+    def _theta_e_infinity_for_selected(self, selected_indices, cosmo):
+        """Compute vectorized theta_e_infinity [arcsec] for selected indices.
+
+        Returns None if the deflector mass model or table columns
+        require the per-deflector generic path.
+        """
+        if not getattr(self, "_astropy_table", False) or not isinstance(
+            self._objects_select, Table
+        ):
+            return None
+        if self.mass_type not in ("EPL", "NFW", "HERNQUIST", "NFW_HERNQUIST"):
+            return None
+        idx = np.asarray(selected_indices, dtype=int)
+        if idx.size == 0:
+            return np.empty(0, dtype=float)
+        z_arr = self._extract_positive_array("z", idx)
+        if z_arr is None:
+            return None
+        if self.mass_type == "EPL":
+            return self._epl_theta_e_infinity(idx)
+
+        cosmo_cache = get_cosmo_cache(cosmo)
+        dd_l, ds_100, dds_100 = cosmo_cache.dd_ds_dds_at_z100(z_arr)
+        const_factor = (constants.c**2 / (4.0 * np.pi * constants.G)) * (
+            constants.Mpc / constants.M_sun
+        )
+        sigma_crit = (ds_100 / (dd_l * dds_100)) * const_factor
+
+        rs_nfw = alpha_rs = None
+        if self.mass_type in ("NFW", "NFW_HERNQUIST"):
+            nfw_params = self._nfw_angular_params(
+                idx, cosmo_cache, z_arr, sigma_crit, dd_l
+            )
+            if nfw_params is None:
+                return None
+            rs_nfw, alpha_rs = nfw_params
+
+        rs_hern = sigma0 = None
+        if self.mass_type in ("HERNQUIST", "NFW_HERNQUIST"):
+            hern_params = self._hernquist_angular_params(idx, z_arr, sigma_crit, dd_l)
+            if hern_params is None:
+                return None
+            rs_hern, sigma0 = hern_params
+
+        return theta_E_spherical_nfw_hernquist(
+            rs_nfw=rs_nfw, alpha_rs=alpha_rs, rs_hern=rs_hern, sigma0=sigma0
+        )
 
     def _update_mass(self, kwargs_mass, kwargs_source):
         """Additional updates on mass.

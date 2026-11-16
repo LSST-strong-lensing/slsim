@@ -198,7 +198,6 @@ class Lens(LensedSystemBase):
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
             source_index=source_index
         )
-        lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = x_source, y_source
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
@@ -208,6 +207,13 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
+            if self._use_jax:
+                # Numerical lens-equation solving executes small Python-loop
+                # evaluations where JAX dispatch overhead outweighs array math.
+                lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
+                    source_index=source_index, use_jax=False
+                )
+        lens_eq_solver = LensEquationSolver(lens_model_class)
         einstein_radius = self._approximate_einstein_radius(source_index=source_index)
         image_positions = lens_eq_solver.image_position_from_source(
             point_source_pos_x,
@@ -1442,10 +1448,12 @@ class Lens(LensedSystemBase):
 
         return kwargs_model, kwargs_params
 
-    def deflector_mass_model_lenstronomy(self, source_index=None):
+    def deflector_mass_model_lenstronomy(self, source_index=None, use_jax=None):
         """Returns lens model instance and parameters in lenstronomy
         conventions.
 
+        :param source_index: index of source in source list.
+        :param use_jax: optional override for ``self._use_jax``.
         :return: LensModel() class, kwargs_lens
         """
         if source_index is None:
@@ -1488,19 +1496,17 @@ class Lens(LensedSystemBase):
 
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
+        use_jax_flag = self._use_jax if use_jax is None else use_jax
         if self.multi_plane:
             lens_redshift_list = self.deflector_redshift
-            if self._use_jax is True:
-                use_jax = True
-            else:
-                use_jax = False
+            _use_jax = bool(use_jax_flag)
         else:
             lens_redshift_list = None
             # For significant speedup, use these mass profiles from jaxtronomy
             from slsim.Util.lenstronomy_util import jax_usage
 
-            use_jax = jax_usage(
-                use_jax=self._use_jax, lens_mass_model_list=self._lens_mass_model_list
+            _use_jax = jax_usage(
+                use_jax=use_jax_flag, lens_mass_model_list=self._lens_mass_model_list
             )
         lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,
@@ -1509,7 +1515,7 @@ class Lens(LensedSystemBase):
             z_lens=self.deflector.redshift,
             z_source=z_source,
             z_source_convention=self.max_redshift_source_class.redshift,
-            use_jax=use_jax,
+            use_jax=_use_jax,
             multi_plane=bool(self.multi_plane),
         )
 
