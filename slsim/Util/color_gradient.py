@@ -19,9 +19,7 @@ def default_reference_band(source_dict, default="i"):
         ``log(lambda_band / lambda_default)``, or ``default`` when none exists.
     :rtype: str
     """
-    from slsim.ImageSimulation.image_quality_lenstronomy import (
-        get_band_log_wavelength_ratio,
-    )
+    from slsim.Util.bandpass import get_band_log_wavelength_ratio
 
     available_bands = [
         key.replace("mag_", "", 1)
@@ -104,9 +102,7 @@ def component_weights_for_band(
             "color_gradient['min_weight'] must be in [0, 1 / n_components)."
         )
 
-    from slsim.ImageSimulation.image_quality_lenstronomy import (
-        get_band_effective_wavelength,
-    )
+    from slsim.Util.bandpass import get_band_effective_wavelength
 
     wavelength = get_band_effective_wavelength(band)
     reference_wavelength = get_band_effective_wavelength(reference_band)
@@ -184,9 +180,7 @@ def radial_color_gradient_image(
         return image
 
     reference_band = color_gradient.get("reference_band") or default_reference
-    from slsim.ImageSimulation.image_quality_lenstronomy import (
-        get_band_log_wavelength_ratio,
-    )
+    from slsim.Util.bandpass import get_band_log_wavelength_ratio
 
     band_offset = get_band_log_wavelength_ratio(
         band=band, reference_band=reference_band

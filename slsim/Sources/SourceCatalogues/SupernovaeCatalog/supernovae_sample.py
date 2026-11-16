@@ -9,7 +9,7 @@ from scipy import stats
 from slsim.Sources.SourcePopulation.galaxies import galaxy_projected_eccentricity
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.Util.param_util import elliptical_distortion_product_average
-from slsim.ImageSimulation.image_quality_lenstronomy import get_sncosmo_filtername
+from slsim.Util.bandpass import get_sncosmo_filtername
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):

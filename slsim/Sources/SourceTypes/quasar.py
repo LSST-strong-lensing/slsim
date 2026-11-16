@@ -5,7 +5,7 @@ from slsim.Sources.SourceVariability.variability import (
 )
 from slsim.Sources.SourceVariability import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
-from slsim.ImageSimulation.image_quality_lenstronomy import (
+from slsim.Util.bandpass import (
     get_speclite_filternames,
     get_all_supported_bands,
 )

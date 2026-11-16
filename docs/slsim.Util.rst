@@ -44,6 +44,14 @@ slsim.Util.coolest\_slsim\_interface module
    :undoc-members:
    :show-inheritance:
 
+slsim.Util.bandpass module
+---------------------------
+
+.. automodule:: slsim.Util.bandpass
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 slsim.Util.cosmo\_util module
 -----------------------------
 

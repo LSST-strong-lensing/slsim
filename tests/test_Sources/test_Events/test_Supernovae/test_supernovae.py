@@ -74,5 +74,21 @@ def test_supernova_amplitude_arguments(capsys):
         Supernova(**kwargs)
 
 
+def test_supernova_survey_band_aliases():
+    kwargs = dict(source="salt3-nir", redshift=0.5, sn_type="Ia")
+
+    sn_i = Supernova(absolute_mag=-19.3, absolute_mag_band="i", **kwargs)
+    npt.assert_allclose(
+        sn_i.get_apparent_magnitude(time=0, band="i"),
+        sn_i.get_apparent_magnitude(time=0, band="lssti"),
+    )
+
+    sn_roman = Supernova(absolute_mag=-19.3, absolute_mag_band="F062", **kwargs)
+    assert np.isfinite(sn_roman.get_apparent_magnitude(time=0, band="F062"))
+
+    peak = Supernova(peak_apparent_mag=22.0, peak_apparent_mag_band="i", **kwargs)
+    npt.assert_almost_equal(peak.source_peakmag("lssti", "AB"), 22.0, decimal=3)
+
+
 if __name__ == "__main__":
     pytest.main()

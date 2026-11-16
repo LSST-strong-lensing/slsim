@@ -17,7 +17,7 @@ from slsim.Deflectors.deflector import Deflector
 from slsim.Lenses.lens import Lens
 from slsim.ImageSimulation.image_simulation import lens_image
 from slsim.Util.param_util import gaussian_psf
-from slsim.ImageSimulation.image_quality_lenstronomy import (
+from slsim.Util.bandpass import (
     ROMAN_BAND_LIST,
     EUCLID_BAND_LIST,
     LSST_BAND_LIST,

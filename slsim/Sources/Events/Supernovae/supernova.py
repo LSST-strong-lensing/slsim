@@ -1,7 +1,7 @@
 import os
 from warnings import warn
 import sncosmo
-from sncosmo.bandpasses import get_bandpass
+from slsim.Util.bandpass import get_sncosmo_bandpass
 import numpy as np
 from astropy import cosmology
 
@@ -128,7 +128,7 @@ class Supernova(sncosmo.Model):
         :return: magnitude of source. Never NaN: times at which the supernova has
             no flux, and bands the SED model does not cover, give inf.
         """
-        bandpass = get_bandpass(band)
+        bandpass = get_sncosmo_bandpass(band)
 
         scalar_time = np.ndim(time) == 0
         time_array = np.atleast_1d(np.asarray(time, dtype=float))
@@ -204,12 +204,15 @@ class Supernova(sncosmo.Model):
                     "Must set absolute_mag_band when attempting to set an absolute magnitude."
                 )
             else:
+                abs_mag_band = get_sncosmo_bandpass(abs_mag_band)
                 self.set_source_peakabsmag(absmag, abs_mag_band, magsys, cosmo=cosmo)
                 if peak_apparent_mag is not None:
                     print(
                         "Both peak_apparent_mag and absolute_mag were given, choosing absolute_mag."
                     )
         elif peak_apparent_mag is not None:
+            if peak_apparent_mag_band is not None:
+                peak_apparent_mag_band = get_sncosmo_bandpass(peak_apparent_mag_band)
             self.set_source_peakmag(peak_apparent_mag, peak_apparent_mag_band, magsys)
         else:
             warn(

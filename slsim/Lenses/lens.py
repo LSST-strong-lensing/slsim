@@ -16,10 +16,8 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 from slsim.Util.catalog_util import safe_value
 from slsim.ImageSimulation.image_simulation import simulate_image
-from slsim.ImageSimulation.image_quality_lenstronomy import (
-    kwargs_single_band,
-    get_observatory,
-)
+from slsim.ImageSimulation.image_quality_lenstronomy import kwargs_single_band
+from slsim.Util.bandpass import get_observatory
 from scipy.ndimage import label
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
