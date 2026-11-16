@@ -1,4 +1,9 @@
-from slsim.Util.cosmo_util import get_cosmo_cache, z_scale_factor, z_time_interp
+from slsim.Util.cosmo_util import (
+    _MAX_FALLBACK_COSMOS,
+    get_cosmo_cache,
+    z_scale_factor,
+    z_time_interp,
+)
 from astropy.cosmology import FlatLambdaCDM, LambdaCDM
 import numpy as np
 import numpy.testing as npt
@@ -90,3 +95,68 @@ def test_cosmology_distance_cache():
         ).value,
         rtol=1e-5,
     )
+    assert curved_cache.dds_over_ds(1.4, 0.4) == 0.0
+    npt.assert_allclose(
+        curved_cache.dds_over_ds(np.array([0.4, 1.4]), np.array([1.4, 0.4])),
+        np.array(
+            [
+                (
+                    curved_cosmo.angular_diameter_distance_z1z2(0.4, 1.4)
+                    / curved_cosmo.angular_diameter_distance(1.4)
+                ).value,
+                0.0,
+            ]
+        ),
+        rtol=1e-5,
+    )
+
+    # Scalar flat dds_over_ds, negative-redshift exact fallback, and z=100 helper
+    assert cache_a.dds_over_ds(0.5, 0.3) == 0.0
+    npt.assert_allclose(cache_a.dds_over_ds(0.3, 1.2), expected_ratio[0], rtol=1e-4)
+    npt.assert_allclose(cache_a.efunc(-0.05), cosmo.efunc(-0.05), rtol=1e-6)
+    npt.assert_allclose(
+        cache_a.efunc(np.array([-0.05, 0.5])),
+        cosmo.efunc(np.array([-0.05, 0.5])),
+        rtol=1e-4,
+    )
+    dd_flat, ds_flat, dds_flat = cache_a.dd_ds_dds_at_z100(np.array([0.3, 0.6]))
+    npt.assert_allclose(
+        ds_flat, cosmo.angular_diameter_distance(100.0).value, rtol=1e-6
+    )
+    npt.assert_allclose(
+        dd_flat, cosmo.angular_diameter_distance([0.3, 0.6]).value, rtol=1e-4
+    )
+    npt.assert_allclose(
+        dds_flat,
+        cosmo.angular_diameter_distance_z1z2([0.3, 0.6], 100.0).value,
+        rtol=1e-4,
+    )
+    dd_c, ds_c, dds_c = curved_cache.dd_ds_dds_at_z100(np.array([0.3, 0.6]))
+    npt.assert_allclose(
+        dds_c,
+        curved_cosmo.angular_diameter_distance_z1z2([0.3, 0.6], 100.0).value,
+        rtol=1e-6,
+    )
+
+    # Weakref-capable cosmology object and bounded fallback cache eviction
+    class _WeakrefCosmoWrapper:
+        def __init__(self, base):
+            self._base = base
+            self.Ok0 = base.Ok0
+
+        def angular_diameter_distance(self, z):
+            return self._base.angular_diameter_distance(z)
+
+        def comoving_distance(self, z):
+            return self._base.comoving_distance(z)
+
+        def efunc(self, z):
+            return self._base.efunc(z)
+
+    wrapped = _WeakrefCosmoWrapper(cosmo)
+    w_cache_1 = get_cosmo_cache(wrapped)
+    w_cache_2 = get_cosmo_cache(wrapped)
+    assert w_cache_1 is w_cache_2
+
+    for i in range(_MAX_FALLBACK_COSMOS + 2):
+        get_cosmo_cache(FlatLambdaCDM(H0=65.0 + i, Om0=0.3))

@@ -684,5 +684,534 @@ def test_draw_population_fallbacks_and_edge_cases(gg_lens_pop_instance, monkeypa
     assert isinstance(ps_pop.draw_population({}, speed_factor=200), list)
 
 
+def test_deflector_vectorized_all_branches():
+    from astropy import units as u
+    from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    area = Quantity(value=0.05, unit="deg2")
+    n = 4
+    base_kwargs = {
+        "kwargs_cut": {"band": "g", "band_max": 25, "z_min": 0.05, "z_max": 1.0},
+        "kwargs_mass2light": {},
+        "cosmo": cosmo,
+        "sky_area": area,
+        "catalog_type": None,
+    }
+
+    # EPL via _vel_disp_from_stellar_mass and m_star_v_disp_scaling
+    epl_mstar_tbl = Table(
+        {
+            "z": np.linspace(0.2, 0.6, n),
+            "stellar_mass": np.full(n, 2e11),
+            "angular_size": np.full(n, 0.5),
+            "e1": np.zeros(n),
+            "e2": np.zeros(n),
+            "mag_g": np.full(n, 19.0),
+        }
+    )
+    pop_interp = DeflectorsBase(
+        deflector_table=epl_mstar_tbl.copy(), mass_type="EPL", **base_kwargs
+    )
+    pop_interp._vel_disp_from_stellar_mass = lambda log_m: np.full_like(
+        log_m, 230.0, dtype=float
+    )
+    assert np.allclose(
+        pop_interp._theta_e_infinity_for_selected(np.arange(n), cosmo),
+        pop_interp._draw_deflector_at_selected(0).theta_e_infinity(
+            cosmo, use_jax=False
+        ),
+        rtol=1e-6,
+    )
+
+    m2l_kwargs = dict(base_kwargs)
+    m2l_kwargs["kwargs_mass2light"] = {"m_star_v_disp_scaling": True}
+    pop_scaling = DeflectorsBase(
+        deflector_table=epl_mstar_tbl.copy(), mass_type="EPL", **m2l_kwargs
+    )
+    assert np.allclose(
+        pop_scaling._theta_e_infinity_for_selected(np.arange(n), cosmo),
+        pop_scaling._draw_deflector_at_selected(0).theta_e_infinity(
+            cosmo, use_jax=False
+        ),
+        rtol=1e-6,
+    )
+
+    # Fallback None cases for EPL
+    pop_no_vdisp = DeflectorsBase(
+        deflector_table=epl_mstar_tbl.copy(), mass_type="EPL", **base_kwargs
+    )
+    assert pop_no_vdisp._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+
+    bad_mstar_tbl = epl_mstar_tbl.copy()
+    bad_mstar_tbl["stellar_mass"][0] = -1.0
+    pop_bad_mstar = DeflectorsBase(
+        deflector_table=bad_mstar_tbl, mass_type="EPL", **m2l_kwargs
+    )
+    assert pop_bad_mstar._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+
+    bad_vdisp_tbl = Table(
+        {
+            "z": np.linspace(0.2, 0.6, n),
+            "vel_disp": np.array([200.0, -5.0, 210.0, 220.0]),
+            "angular_size": np.full(n, 0.5),
+            "e1": np.zeros(n),
+            "e2": np.zeros(n),
+            "mag_g": np.full(n, 19.0),
+        }
+    )
+    pop_bad_vdisp = DeflectorsBase(
+        deflector_table=bad_vdisp_tbl, mass_type="EPL", **base_kwargs
+    )
+    assert pop_bad_vdisp._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+
+    # NFW-only and HERNQUIST-only (physical_size + Quantity + skypy scaling)
+    nfw_tbl = Table(
+        {
+            "z": np.linspace(0.2, 0.6, n),
+            "halo_mass": np.full(n, 2e14),
+            "concentration": np.full(n, 5.0),
+            "physical_size": np.full(n, 4.0) * u.kpc,
+            "stellar_mass": np.full(n, 2e11),
+            "e1": np.zeros(n),
+            "e2": np.zeros(n),
+            "mag_g": np.full(n, 19.0),
+        }
+    )
+    pop_nfw = DeflectorsBase(
+        deflector_table=nfw_tbl.copy(),
+        mass_type="NFW",
+        light_type="single_sersic",
+        **base_kwargs,
+    )
+    vec_nfw = pop_nfw._theta_e_infinity_for_selected(np.arange(n), cosmo)
+    ref_nfw = pop_nfw._draw_deflector_at_selected(0).theta_e_infinity(
+        cosmo, use_jax=False
+    )
+    np.testing.assert_allclose(vec_nfw[0], ref_nfw, rtol=1e-2)
+
+    hern_kwargs = dict(base_kwargs)
+    hern_kwargs["catalog_type"] = "skypy"
+    pop_hern = DeflectorsBase(
+        deflector_table=nfw_tbl.copy(),
+        mass_type="HERNQUIST",
+        light_type="hernquist",
+        **hern_kwargs,
+    )
+    assert np.all(pop_hern._theta_e_infinity_for_selected(np.arange(n), cosmo) > 0.0)
+
+    # Guard edge cases returning None / empty
+    assert len(pop_nfw._theta_e_infinity_for_selected([], cosmo)) == 0
+
+    bad_z_tbl = nfw_tbl.copy()
+    pop_bad_z = DeflectorsBase(
+        deflector_table=bad_z_tbl,
+        mass_type="NFW",
+        kwargs_mass2light={},
+        kwargs_cut={},
+        cosmo=cosmo,
+        sky_area=area,
+        catalog_type=None,
+    )
+    pop_bad_z._objects_select["z"][1] = -0.1
+    assert pop_bad_z._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+
+    pop_pjaffe = DeflectorsBase(
+        deflector_table=nfw_tbl.copy(), mass_type="PJAFFE", **base_kwargs
+    )
+    assert pop_pjaffe._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+
+    list_defs = [
+        Table(
+            {
+                "z": [0.3],
+                "vel_disp": [220.0],
+                "angular_size": [0.5],
+                "e1": [0.0],
+                "e2": [0.0],
+                "mag_g": [19.0],
+            }
+        )
+    ]
+    pop_list = DeflectorsBase(deflector_table=list_defs, mass_type="EPL", **base_kwargs)
+    assert pop_list._theta_e_infinity_for_selected([0], cosmo) is None
+
+    no_halo_tbl = epl_mstar_tbl.copy()
+    pop_comp_missing_nfw = DeflectorsBase(
+        deflector_table=no_halo_tbl, mass_type="NFW_HERNQUIST", **base_kwargs
+    )
+    assert (
+        pop_comp_missing_nfw._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+    )
+
+    no_size_tbl = nfw_tbl.copy()
+    no_size_tbl.remove_column("physical_size")
+    pop_comp_missing_size = DeflectorsBase(
+        deflector_table=no_size_tbl, mass_type="NFW_HERNQUIST", **base_kwargs
+    )
+    assert (
+        pop_comp_missing_size._theta_e_infinity_for_selected(np.arange(n), cosmo)
+        is None
+    )
+
+    pop_bad_light = DeflectorsBase(
+        deflector_table=nfw_tbl.copy(),
+        mass_type="HERNQUIST",
+        light_type="double_sersic",
+        **base_kwargs,
+    )
+    assert pop_bad_light._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+
+    pop_no_mstar = DeflectorsBase(
+        deflector_table=bad_vdisp_tbl, mass_type="HERNQUIST", **base_kwargs
+    )
+    assert pop_no_mstar._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+
+    pop_bernardi = Galaxies(
+        galaxy_list=nfw_tbl.copy(),
+        cosmo=cosmo,
+        sky_area=area,
+        kwargs_cut=base_kwargs["kwargs_cut"],
+        catalog_type="skypy",
+        size_model="Bernardi",
+    )
+    # Trigger _size_model == "Bernardi" and "skypy" on DeflectorsBase instance
+    pop_hern._size_model = "Bernardi"
+    assert pop_hern._theta_e_infinity_for_selected(np.arange(n), cosmo) is None
+    assert pop_bernardi.source_number_selected == n
+
+
+def test_draw_population_vectorized_sources_and_fallbacks():
+    from slsim.Sources.SourcePopulation.point_sources import PointSources
+
+    np.random.seed(42)
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    def_area = Quantity(value=0.001, unit="deg2")
+    src_area = Quantity(value=100.0, unit="arcsec2")
+    pop_area = Quantity(value=0.001, unit="deg2")
+
+    n_def = 4
+    lens_tbl = Table(
+        {
+            "z": np.full(n_def, 0.25),
+            "vel_disp": np.full(n_def, 320.0),
+            "angular_size": np.full(n_def, 0.5),
+            "e1": np.full(n_def, 0.05),
+            "e2": np.zeros(n_def),
+            "mag_g": np.full(n_def, 18.0),
+            "mag_i": np.full(n_def, 17.5),
+        }
+    )
+    def_pop = GalaxyDeflectors(
+        red_galaxy_list=lens_tbl,
+        kwargs_cut={"band": "g", "band_max": 25, "z_min": 0.05, "z_max": 1.0},
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=def_area,
+        catalog_type=None,
+    )
+
+    n_src = 8
+    pes_tbl = Table(
+        {
+            "z": np.full(n_src, 1.5),
+            "ps_mag_i": np.full(n_src, 20.0),
+            "mag_i": np.full(n_src, 21.0),
+            "angular_size": np.full(n_src, 0.15),
+            "e1": np.zeros(n_src),
+            "e2": np.zeros(n_src),
+            "ra_off": np.full(n_src, 0.001),
+            "dec_off": np.full(n_src, 0.002),
+        }
+    )
+    qso_kw = {
+        "variability_model": "light_curve",
+        "kwargs_variability": None,
+        "agn_driving_variability_model": None,
+        "agn_driving_kwargs_variability": None,
+        "lightcurve_time": None,
+    }
+    pes_src = PointPlusExtendedSources(
+        point_plus_extended_sources_list=pes_tbl,
+        cosmo=cosmo,
+        sky_area=src_area,
+        kwargs_cut={"z_min": 0.1, "z_max": 3.0},
+        point_source_type="quasar",
+        extended_source_type="single_sersic",
+        joint_point_source_kwargs=qso_kw,
+    )
+    pes_pop = LensPop(
+        deflector_population=def_pop,
+        source_population=pes_src,
+        cosmo=cosmo,
+        sky_area=pop_area,
+        use_jax=use_jax,
+    )
+    pes_lenses = pes_pop.draw_population({}, multi_source=True)
+    assert len(pes_lenses) > 0
+
+    # PointPlusExtendedSources without offset columns (joint defaults and zero-offset)
+    pes_no_off_tbl = pes_tbl.copy()
+    pes_no_off_tbl.remove_columns(["ra_off", "dec_off"])
+    pes_src_zero_off = PointPlusExtendedSources(
+        point_plus_extended_sources_list=pes_no_off_tbl.copy(),
+        cosmo=cosmo,
+        sky_area=src_area,
+        kwargs_cut={"z_min": 0.1, "z_max": 3.0},
+        point_source_type="quasar",
+        extended_source_type=None,
+        joint_point_source_kwargs=qso_kw,
+    )
+    assert (
+        LensPop(
+            def_pop, pes_src_zero_off, cosmo, sky_area=pop_area
+        )._extract_source_screen_arrays()[1]
+        is None
+    )
+    pes_src_joint_off = PointPlusExtendedSources(
+        point_plus_extended_sources_list=pes_no_off_tbl.copy(),
+        cosmo=cosmo,
+        sky_area=src_area,
+        kwargs_cut={"z_min": 0.1, "z_max": 3.0},
+        point_source_type="quasar",
+        extended_source_type=None,
+        joint_point_source_kwargs={**qso_kw, "ra_off": 0.002, "dec_off": 0.001},
+    )
+    _, joint_ra, joint_dec = LensPop(
+        def_pop, pes_src_joint_off, cosmo, sky_area=pop_area
+    )._extract_source_screen_arrays()
+    assert np.allclose(joint_ra, 0.002) and np.allclose(joint_dec, 0.001)
+
+    # PointSources-only vectorized draw_population
+    ps_only_tbl = Table({"z": np.full(n_src, 1.5), "ps_mag_i": np.full(n_src, 20.0)})
+    ps_only_src = PointSources(
+        point_source_list=ps_only_tbl,
+        cosmo=cosmo,
+        sky_area=src_area,
+        kwargs_cut={"z_min": 0.1, "z_max": 3.0},
+        point_source_type="quasar",
+        joint_point_source_kwargs=qso_kw,
+    )
+    ps_only_lenses = LensPop(
+        def_pop, ps_only_src, cosmo, sky_area=pop_area, use_jax=use_jax
+    ).draw_population({})
+    assert len(ps_only_lenses) > 0
+
+    # Cover empty z_pass (z_d > all z_s) and non-linear bound (non-SIS EPL)
+    from slsim.Util.cosmo_util import get_cosmo_cache
+
+    _, _, _, empty_keep = LensPop._screen_candidates_for_deflector(
+        z_d=3.0,
+        theta_e_inf=2.0,
+        n_test=5,
+        src_z=np.array([1.0, 1.5]),
+        src_ra_off=None,
+        src_dec_off=None,
+        cosmo_cache=get_cosmo_cache(cosmo),
+        use_linear_bound=False,
+        dds_ds_100=0.5,
+    )
+    assert empty_keep.size == 0
+
+    non_sis_def = GalaxyDeflectors(
+        red_galaxy_list=lens_tbl.copy(),
+        kwargs_cut={"band": "g", "band_max": 25, "z_min": 0.05, "z_max": 1.0},
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=def_area,
+        catalog_type=None,
+        gamma_pl=2.1,
+        sis_convention=False,
+    )
+    assert isinstance(
+        LensPop(non_sis_def, ps_only_src, cosmo, sky_area=pop_area).draw_population({}),
+        list,
+    )
+
+    # Exercise remaining _try_draw_population_vectorized guards + generic unscreened loop
+    class CustomMeanPop(LensPop):
+        def get_num_sources_tested_mean(self, testarea):
+            return super().get_num_sources_tested_mean(testarea)
+
+    assert (
+        CustomMeanPop(
+            def_pop, ps_only_src, cosmo, sky_area=pop_area
+        )._try_draw_population_vectorized(1, {}, False, 1, False)
+        is None
+    )
+
+    # Generic loop succeeding with multi_source=False and multi_source=True
+    generic_lenses = CustomMeanPop(
+        def_pop, ps_only_src, cosmo, sky_area=pop_area
+    ).draw_population({}, multi_source=False)
+    assert len(generic_lenses) > 0
+    assert (
+        CustomMeanPop(
+            def_pop, ps_only_src, cosmo, sky_area=pop_area
+        )._draw_sources_unscreened(
+            deflector=def_pop.draw_deflector(),
+            test_area=10.0,
+            num_sources_tested=0,
+            kwargs_lens_cuts={},
+            multi_source=True,
+        )
+        is None
+    )
+    assert (
+        CustomMeanPop(
+            def_pop, ps_only_src, cosmo, sky_area=pop_area
+        )._draw_sources_unscreened(
+            deflector=def_pop.draw_deflector(),
+            test_area=1e6,
+            num_sources_tested=1,
+            kwargs_lens_cuts={"min_image_separation": 50.0},
+            multi_source=True,
+        )
+        is None
+    )
+
+    class CustomDefPop(GalaxyDeflectors):
+        def draw_deflector(self, z_max=None, z_min=None, deflector_index=None):
+            return super().draw_deflector(
+                z_max=z_max, z_min=z_min, deflector_index=deflector_index
+            )
+
+    custom_def = CustomDefPop(
+        red_galaxy_list=lens_tbl.copy(),
+        kwargs_cut={"band": "g", "band_max": 25, "z_min": 0.05, "z_max": 1.0},
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=def_area,
+        catalog_type=None,
+    )
+    assert (
+        LensPop(
+            custom_def, ps_only_src, cosmo, sky_area=pop_area
+        )._try_draw_population_vectorized(1, {}, False, 1, False)
+        is None
+    )
+
+    empty_src = PointSources(
+        point_source_list=Table({"z": [1.5], "ps_mag_i": [20.0]}),
+        cosmo=cosmo,
+        sky_area=src_area,
+        kwargs_cut={},
+        point_source_type="quasar",
+        joint_point_source_kwargs=qso_kw,
+    )
+    empty_src._num_select = 0
+    assert (
+        LensPop(
+            def_pop, empty_src, cosmo, sky_area=pop_area
+        )._try_draw_population_vectorized(1, {}, False, 1, False)
+        is None
+    )
+
+    list_src = Galaxies(
+        galaxy_list=[
+            Table(
+                {
+                    "z": [1.5],
+                    "angular_size": [0.2],
+                    "e1": [0.0],
+                    "e2": [0.0],
+                    "mag_i": [21.0],
+                }
+            )
+        ],
+        cosmo=cosmo,
+        sky_area=src_area,
+        catalog_type=None,
+    )
+    pop_list_src = LensPop(def_pop, list_src, cosmo, sky_area=pop_area)
+    assert not pop_list_src._is_source_population_vectorizable()
+    assert pop_list_src._try_draw_population_vectorized(1, {}, False, 1, False) is None
+
+    class CustomObjSrc(Galaxies):
+        def draw_object(self, z_max=None, z_min=None, galaxy_index=None):
+            return super().draw_object(
+                z_max=z_max, z_min=z_min, galaxy_index=galaxy_index
+            )
+
+    class CustomDrawSrc(Galaxies):
+        def draw_source(self, z_max=None, z_min=None, galaxy_index=None):
+            return super().draw_source(
+                z_max=z_max, z_min=z_min, galaxy_index=galaxy_index
+            )
+
+    src_tbl = Table(
+        {
+            "z": [1.5],
+            "angular_size": [0.2],
+            "e1": [0.0],
+            "e2": [0.0],
+            "mag_i": [21.0],
+        }
+    )
+    assert not LensPop(
+        def_pop,
+        CustomObjSrc(
+            galaxy_list=src_tbl.copy(),
+            cosmo=cosmo,
+            sky_area=src_area,
+            catalog_type=None,
+        ),
+        cosmo,
+        sky_area=pop_area,
+    )._is_source_population_vectorizable()
+    assert not LensPop(
+        def_pop,
+        CustomDrawSrc(
+            galaxy_list=src_tbl.copy(),
+            cosmo=cosmo,
+            sky_area=src_area,
+            catalog_type=None,
+        ),
+        cosmo,
+        sky_area=pop_area,
+    )._is_source_population_vectorizable()
+
+    bad_src_z = PointSources(
+        point_source_list=Table({"z": [1.5], "ps_mag_i": [20.0]}),
+        cosmo=cosmo,
+        sky_area=src_area,
+        kwargs_cut={},
+        point_source_type="quasar",
+        joint_point_source_kwargs=qso_kw,
+    )
+    bad_src_z._objects_select["z"][0] = np.nan
+    assert (
+        LensPop(
+            def_pop, bad_src_z, cosmo, sky_area=pop_area
+        )._extract_source_screen_arrays()
+        is None
+    )
+
+    no_vdisp_def = GalaxyDeflectors(
+        red_galaxy_list=Table(
+            {
+                "z": [0.3],
+                "vel_disp": [200.0],
+                "angular_size": [0.5],
+                "e1": [0.0],
+                "e2": [0.0],
+                "mag_g": [18.0],
+            }
+        ),
+        kwargs_cut={},
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=def_area,
+        catalog_type=None,
+    )
+    no_vdisp_def._objects_select["vel_disp"][0] = np.nan
+    assert (
+        LensPop(
+            no_vdisp_def, ps_only_src, cosmo, sky_area=pop_area
+        )._try_draw_population_vectorized(1, {}, False, 1, False)
+        is None
+    )
+
+
 if __name__ == "__main__":
     pytest.main()

@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.testing as npt
+import pytest
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.LensModel.lens_model import LensModel
 
@@ -46,3 +47,10 @@ def test_theta_e_spherical_nfw_hernquist_and_numerical():
     assert arr_vals.shape == (2,)
     assert arr_vals[0] > 0.1
     assert arr_vals[1] == 0.0
+
+    nfw_g_vals = lenstronomy_util._nfw_g(np.array([0.5, 1.0, 2.0]))
+    hern_f_vals = lenstronomy_util._hernquist_f(np.array([0.5, 1.0, 2.0]))
+    npt.assert_allclose(nfw_g_vals[1], lenstronomy_util._NFW_NORM)
+    npt.assert_allclose(hern_f_vals[1], 1.0 / 3.0)
+    with pytest.raises(ValueError):
+        lenstronomy_util.theta_E_spherical_nfw_hernquist()

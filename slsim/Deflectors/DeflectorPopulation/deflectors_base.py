@@ -142,53 +142,52 @@ class DeflectorsBase(Galaxies):
             v_sigma = np.asarray(
                 self._objects_select["vel_disp"][selected_indices], dtype=float
             )
-        elif (
-            self._vel_disp_from_stellar_mass is not None and "stellar_mass" in colnames
-        ):
-            stellar_mass = np.asarray(
-                self._objects_select["stellar_mass"][selected_indices], dtype=float
-            )
-            if not np.all(np.isfinite(stellar_mass)) or np.any(stellar_mass <= 0.0):
-                return None
-            v_sigma = np.asarray(
-                self._vel_disp_from_stellar_mass(np.log10(stellar_mass)), dtype=float
-            )
-        elif (
-            self._kwargs_mass2light.get("m_star_v_disp_scaling", False)
-            and "stellar_mass" in colnames
-        ):
-            stellar_mass = np.asarray(
-                self._objects_select["stellar_mass"][selected_indices], dtype=float
-            )
-            if not np.all(np.isfinite(stellar_mass)) or np.any(stellar_mass <= 0.0):
-                return None
-            v_sigma = np.asarray(vel_disp_from_m_star(stellar_mass), dtype=float)
         else:
-            return None
+            use_interp = self._vel_disp_from_stellar_mass is not None
+            use_scaling = bool(
+                self._kwargs_mass2light.get("m_star_v_disp_scaling", False)
+            )
+            if not (use_interp or use_scaling) or "stellar_mass" not in colnames:
+                return None
+            stellar_mass = self._extract_positive_array(
+                "stellar_mass", selected_indices
+            )
+            if stellar_mass is None:
+                return None
+            v_sigma = (
+                np.asarray(
+                    self._vel_disp_from_stellar_mass(np.log10(stellar_mass)),
+                    dtype=float,
+                )
+                if use_interp
+                else np.asarray(vel_disp_from_m_star(stellar_mass), dtype=float)
+            )
         if not np.all(np.isfinite(v_sigma)) or np.any(v_sigma < 0.0):
             return None
         return 4.0 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
+
+    def _extract_positive_array(self, colname, selected_indices, unit=None):
+        """Extract column slice as positive finite float array, else None."""
+        if colname not in self._objects_select.colnames:
+            return None
+        col = self._objects_select[colname][selected_indices]
+        arr = (
+            col.to_value(unit)
+            if unit is not None and isinstance(col, u.Quantity)
+            else np.asarray(col, dtype=float)
+        )
+        if not np.all(np.isfinite(arr)) or np.any(arr <= 0.0):
+            return None
+        return arr
 
     def _nfw_angular_params(
         self, selected_indices, cosmo_cache, z_arr, sigma_crit, dd_l
     ):
         """Return vectorized (Rs_nfw, alpha_Rs) at z_s=100, or None on
         fallback."""
-        colnames = self._objects_select.colnames
-        if "halo_mass" not in colnames or "concentration" not in colnames:
-            return None
-        halo_mass = np.asarray(
-            self._objects_select["halo_mass"][selected_indices], dtype=float
-        )
-        concentration = np.asarray(
-            self._objects_select["concentration"][selected_indices], dtype=float
-        )
-        if (
-            not np.all(np.isfinite(halo_mass))
-            or np.any(halo_mass <= 0.0)
-            or not np.all(np.isfinite(concentration))
-            or np.any(concentration <= 0.0)
-        ):
+        halo_mass = self._extract_positive_array("halo_mass", selected_indices)
+        concentration = self._extract_positive_array("concentration", selected_indices)
+        if halo_mass is None or concentration is None:
             return None
         h = float(cosmo_cache.cosmo.H(0).value) / 100.0
         efunc_l = cosmo_cache.efunc(z_arr)
@@ -218,38 +217,22 @@ class DeflectorsBase(Galaxies):
             "single_sersic",
             "hernquist",
             "catalog_source",
-        ):
+        ) or (self._size_model == "Bernardi" and self._catalog_type == "skypy"):
             return None
-        if self._size_model == "Bernardi" and self._catalog_type == "skypy":
-            return None
-        colnames = self._objects_select.colnames
-        if "stellar_mass" not in colnames:
-            return None
-        stellar_mass = np.asarray(
-            self._objects_select["stellar_mass"][selected_indices], dtype=float
-        )
-        if not np.all(np.isfinite(stellar_mass)) or np.any(stellar_mass <= 0.0):
+        stellar_mass = self._extract_positive_array("stellar_mass", selected_indices)
+        if stellar_mass is None:
             return None
 
-        if "angular_size" in colnames:
-            col = self._objects_select["angular_size"][selected_indices]
-            ang_size = (
-                col.to_value(u.arcsec)
-                if isinstance(col, u.Quantity)
-                else np.asarray(col, dtype=float)
+        ang_size = self._extract_positive_array(
+            "angular_size", selected_indices, unit=u.arcsec
+        )
+        if ang_size is None:
+            phys_kpc = self._extract_positive_array(
+                "physical_size", selected_indices, unit=u.kpc
             )
-        elif "physical_size" in colnames:
-            col = self._objects_select["physical_size"][selected_indices]
-            phys_kpc = (
-                col.to_value(u.kpc)
-                if isinstance(col, u.Quantity)
-                else np.asarray(col, dtype=float)
-            )
+            if phys_kpc is None:
+                return None
             ang_size = (phys_kpc / (dd_l * 1000.0)) / constants.arcsec
-        else:
-            return None
-        if not np.all(np.isfinite(ang_size)) or np.any(ang_size <= 0.0):
-            return None
         if self._catalog_type == "skypy":
             ang_size = ang_size * (galaxy_size_redshift_evolution(z_arr) / 2.5)
         rs_hern = ang_size / 1.815
@@ -272,8 +255,8 @@ class DeflectorsBase(Galaxies):
         idx = np.asarray(selected_indices, dtype=int)
         if idx.size == 0:
             return np.empty(0, dtype=float)
-        z_arr = np.asarray(self._objects_select["z"][idx], dtype=float)
-        if not np.all(np.isfinite(z_arr)) or np.any(z_arr <= 0.0):
+        z_arr = self._extract_positive_array("z", idx)
+        if z_arr is None:
             return None
         if self.mass_type == "EPL":
             return self._epl_theta_e_infinity(idx)

@@ -1499,10 +1499,7 @@ class Lens(LensedSystemBase):
         use_jax_flag = self._use_jax if use_jax is None else use_jax
         if self.multi_plane:
             lens_redshift_list = self.deflector_redshift
-            if use_jax_flag is True:
-                _use_jax = True
-            else:
-                _use_jax = False
+            _use_jax = bool(use_jax_flag)
         else:
             lens_redshift_list = None
             # For significant speedup, use these mass profiles from jaxtronomy
