@@ -54,7 +54,8 @@ def theta_E_spherical_nfw_hernquist(
 ):
     """Solve spherical Einstein radius (alpha(r) = r) for NFW and/or Hernquist.
 
-    Supports scalar or 1D NumPy array inputs. Returns 0 where alpha(r_min) < r_min.
+    Supports scalar or 1D NumPy array inputs. Returns 0 where
+    alpha(r_min) < r_min.
     """
     is_scalar = all(
         v is None or np.ndim(v) == 0 for v in (rs_nfw, alpha_rs, rs_hern, sigma0)

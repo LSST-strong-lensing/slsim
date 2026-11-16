@@ -8,7 +8,8 @@ _MAX_FALLBACK_COSMOS = 16
 
 
 class CosmologyDistanceCache:
-    """Fast interpolated angular diameter, comoving distance, and E(z) lookup."""
+    """Fast interpolated angular diameter, comoving distance, and E(z)
+    lookup."""
 
     def __init__(self, cosmo, z_max=6.0, num_points=2001):
         self.cosmo = cosmo

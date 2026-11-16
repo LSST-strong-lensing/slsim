@@ -135,7 +135,8 @@ class DeflectorsBase(Galaxies):
         return self._deflector_from_object(self._draw_selected_object(selected_index))
 
     def _epl_theta_e_infinity(self, selected_indices):
-        """Compute vectorized EPL theta_e_infinity, or return None on fallback."""
+        """Compute vectorized EPL theta_e_infinity, or return None on
+        fallback."""
         colnames = self._objects_select.colnames
         if "vel_disp" in colnames:
             v_sigma = np.asarray(
@@ -171,7 +172,8 @@ class DeflectorsBase(Galaxies):
     def _nfw_angular_params(
         self, selected_indices, cosmo_cache, z_arr, sigma_crit, dd_l
     ):
-        """Return vectorized (Rs_nfw, alpha_Rs) at z_s=100, or None on fallback."""
+        """Return vectorized (Rs_nfw, alpha_Rs) at z_s=100, or None on
+        fallback."""
         colnames = self._objects_select.colnames
         if "halo_mass" not in colnames or "concentration" not in colnames:
             return None
@@ -210,7 +212,8 @@ class DeflectorsBase(Galaxies):
         return rs_nfw, alpha_rs
 
     def _hernquist_angular_params(self, selected_indices, z_arr, sigma_crit, dd_l):
-        """Return vectorized (Rs_hern, sigma0) at z_s=100, or None on fallback."""
+        """Return vectorized (Rs_hern, sigma0) at z_s=100, or None on
+        fallback."""
         if self._extended_source_type not in (
             "single_sersic",
             "hernquist",
@@ -257,8 +260,8 @@ class DeflectorsBase(Galaxies):
     def _theta_e_infinity_for_selected(self, selected_indices, cosmo):
         """Compute vectorized theta_e_infinity [arcsec] for selected indices.
 
-        Returns None if the deflector mass model or table columns require the
-        per-deflector generic path.
+        Returns None if the deflector mass model or table columns
+        require the per-deflector generic path.
         """
         if not getattr(self, "_astropy_table", False) or not isinstance(
             self._objects_select, Table

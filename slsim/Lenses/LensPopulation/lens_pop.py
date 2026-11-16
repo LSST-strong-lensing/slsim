@@ -366,7 +366,8 @@ class LensPop(LensedPopulationBase):
         use_linear_bound,
         dds_ds_100,
     ):
-        """Sample source draws in the deflector test area and filter geometrically."""
+        """Sample source draws in the deflector test area and filter
+        geometrically."""
         cand_idx = np.random.randint(0, len(src_z), size=n_test)
         u = np.random.random(n_test)
         phi = np.random.uniform(0.0, 2.0 * np.pi, size=n_test)
@@ -408,8 +409,8 @@ class LensPop(LensedPopulationBase):
     ):
         """Vectorized population screening and lazy object construction.
 
-        Returns None when the deflector or source population requires the generic
-        per-object fallback loop.
+        Returns None when the deflector or source population requires
+        the generic per-object fallback loop.
         """
         if type(self).get_num_sources_tested is not LensPop.get_num_sources_tested:
             return None
