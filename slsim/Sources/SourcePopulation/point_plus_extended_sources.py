@@ -108,6 +108,29 @@ class PointPlusExtendedSources(Galaxies):
 
         return kwargs_source
 
+    def _source_from_selected_row(self, galaxy):
+        from slsim.Sources.SourcePopulation.galaxies import convert_catalog_to_source
+
+        kwargs_source = convert_catalog_to_source(
+            galaxy=galaxy,
+            extended_source_type=self._extended_source_type,
+            catalog_type=self._catalog_type,
+            size_model=self._size_model,
+            cosmo=self._cosmo,
+            include_all_keywords=True,
+        )
+        for key, value in self._joint_point_source_kwargs.items():
+            if key not in kwargs_source:
+                kwargs_source[key] = value
+        kwargs_source["point_source_type"] = self._point_source_type
+        kwargs_source["extended_source_type"] = self._extended_source_type
+        return Source(cosmo=self._cosmo, **kwargs_source)
+
+    def _draw_source_at_selected(self, selected_index):
+        return self._source_from_selected_row(
+            self._draw_selected_object(selected_index)
+        )
+
     def draw_source(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
 

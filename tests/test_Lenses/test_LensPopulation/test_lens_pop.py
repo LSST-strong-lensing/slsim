@@ -558,5 +558,131 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
     f"but got {num_sources_range}"
 
 
+def test_los_pop_distribution_cache():
+    from slsim.LOS.los_pop import LOSPop
+
+    los_pop = LOSPop(los_bool=True)
+    dist1 = los_pop._get_los_distribution()
+    dist2 = los_pop._get_los_distribution()
+    assert dist1 is dist2
+    draw = los_pop.draw_los(source_redshift=1.5, deflector_redshift=0.5)
+    assert np.isfinite(draw.convergence)
+
+
+def test_deflector_vectorized_theta_e_infinity():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    area = Quantity(value=0.05, unit="deg2")
+    n = 6
+
+    epl_table = Table(
+        {
+            "z": np.linspace(0.2, 0.7, n),
+            "vel_disp": np.linspace(180.0, 280.0, n),
+            "angular_size": np.full(n, 0.5),
+            "e1": np.zeros(n),
+            "e2": np.zeros(n),
+            "mag_g": np.full(n, 19.0),
+        }
+    )
+    epl_pop = GalaxyDeflectors(
+        red_galaxy_list=epl_table,
+        kwargs_cut={"band": "g", "band_max": 25, "z_min": 0.1, "z_max": 1.0},
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=area,
+        catalog_type=None,
+    )
+    vec_epl = epl_pop._theta_e_infinity_for_selected(np.arange(n), cosmo)
+    ref_epl = np.array(
+        [
+            epl_pop._draw_deflector_at_selected(i).theta_e_infinity(
+                cosmo, use_jax=False
+            )
+            for i in range(n)
+        ]
+    )
+    np.testing.assert_allclose(vec_epl, ref_epl, rtol=1e-6)
+
+    comp_table = Table(
+        {
+            "z": np.linspace(0.25, 0.65, n),
+            "halo_mass": np.full(n, 2e13),
+            "concentration": np.full(n, 6.0),
+            "stellar_mass": np.full(n, 2e11),
+            "angular_size": np.full(n, 0.6),
+            "e1": np.zeros(n),
+            "e2": np.zeros(n),
+            "mag_i": np.full(n, 19.0),
+        }
+    )
+    comp_pop = CompoundLensHalosGalaxies(
+        deflector_table=comp_table,
+        kwargs_cut={"band": "i", "band_max": 25, "z_min": 0.1, "z_max": 1.0},
+        cosmo=cosmo,
+        sky_area=area,
+        catalog_type=None,
+    )
+    vec_comp = comp_pop._theta_e_infinity_for_selected(np.arange(n), cosmo)
+    ref_comp = np.array(
+        [
+            comp_pop._draw_deflector_at_selected(i).theta_e_infinity(
+                cosmo, use_jax=False
+            )
+            for i in range(n)
+        ]
+    )
+    np.testing.assert_allclose(vec_comp, ref_comp, rtol=1e-2)
+
+
+def test_draw_population_fallbacks_and_edge_cases(gg_lens_pop_instance, monkeypatch):
+    assert gg_lens_pop_instance.draw_population({}, speed_factor=1e9) == []
+
+    # Subclass overriding get_num_sources_tested triggers safe generic fallback.
+    class CustomLensPop(LensPop):
+        def get_num_sources_tested(self, testarea=None, num_sources_tested_mean=None):
+            return super().get_num_sources_tested(
+                testarea=testarea, num_sources_tested_mean=num_sources_tested_mean
+            )
+
+    custom_pop = CustomLensPop(
+        deflector_population=gg_lens_pop_instance._lens_galaxies,
+        source_population=gg_lens_pop_instance._sources,
+        cosmo=gg_lens_pop_instance.cosmo,
+        sky_area=gg_lens_pop_instance.sky_area,
+        use_jax=use_jax,
+    )
+    assert custom_pop._try_draw_population_vectorized(1, {}, False, 10, False) is None
+    assert isinstance(custom_pop.draw_population({}, speed_factor=500), list)
+
+    # Non-finite ra_off falls back cleanly without failing vectorized screening.
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    area = Quantity(value=0.05, unit="deg2")
+    ps_table = Table(
+        {
+            "z": [0.9, 1.2],
+            "ra_off": [0.001, np.nan],
+            "dec_off": [0.002, 0.003],
+            "ps_mag_i": [22.0, 22.5],
+        }
+    )
+    ps_src = PointPlusExtendedSources(
+        point_plus_extended_sources_list=ps_table,
+        cosmo=cosmo,
+        sky_area=area,
+        kwargs_cut={"z_min": 0.1, "z_max": 3.0},
+        point_source_type="quasar",
+        extended_source_type=None,
+    )
+    ps_pop = LensPop(
+        deflector_population=gg_lens_pop_instance._lens_galaxies,
+        source_population=ps_src,
+        cosmo=cosmo,
+        sky_area=area,
+        use_jax=use_jax,
+    )
+    assert ps_pop._extract_source_screen_arrays() is None
+    assert isinstance(ps_pop.draw_population({}, speed_factor=200), list)
+
+
 if __name__ == "__main__":
     pytest.main()

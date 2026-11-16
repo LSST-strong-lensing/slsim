@@ -73,6 +73,18 @@ class LOSPop(object):
         self.nonlinear_los_bool = nonlinear_los_bool
         self.nonlinear_correction_path = nonlinear_correction_path
         self.no_correction_path = no_correction_path
+        self._los_dist = None
+        self._los_dist_paths = None
+
+    def _get_los_distribution(self):
+        paths = (self.nonlinear_correction_path, self.no_correction_path)
+        if self._los_dist is None or self._los_dist_paths != paths:
+            self._los_dist = LineOfSightDistribution(
+                nonlinear_correction_path=self.nonlinear_correction_path,
+                no_correction_path=self.no_correction_path,
+            )
+            self._los_dist_paths = paths
+        return self._los_dist
 
     def draw_los(self, source_redshift, deflector_redshift):
         """Calculate line-of-sight distortions in shear and convergence for an
@@ -107,11 +119,8 @@ class LOSPop(object):
         else:
             z_source = float(source_redshift)
             z_lens = float(deflector_redshift)
-            LOS = LineOfSightDistribution(
-                nonlinear_correction_path=self.nonlinear_correction_path,
-                no_correction_path=self.no_correction_path,
-            )
-            gamma_abs, kappa = LOS.get_kappa_gamma(
+            los_dist = self._get_los_distribution()
+            gamma_abs, kappa = los_dist.get_kappa_gamma(
                 z_source, z_lens, self.nonlinear_los_bool
             )
             phi = 2 * np.pi * np.random.random()

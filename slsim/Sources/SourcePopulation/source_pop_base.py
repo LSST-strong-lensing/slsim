@@ -89,3 +89,7 @@ class SourcePopBase(object):
             index = random.randint(0, self._num_select)
             object = self._objects_select[index]
         return object
+
+    def _draw_selected_object(self, selected_index):
+        """Return row from the pre-filtered ``_objects_select`` catalog."""
+        return self._objects_select[int(selected_index)]

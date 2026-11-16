@@ -13,7 +13,11 @@ from slsim.Util.param_util import (
 from astropy import units as u
 from astropy.table import Table
 from slsim.Sources.source import Source
+from slsim.Util.cosmo_util import get_cosmo_cache
 from slsim.Util.data_path import data_path
+
+_ARCSEC_TO_RAD = np.pi / 648000.0
+_RAD_TO_ARCSEC = 648000.0 / np.pi
 
 
 class Galaxies(SourcePopBase):
@@ -134,6 +138,22 @@ class Galaxies(SourcePopBase):
         )
         return kwargs_source
 
+    def _source_from_object(self, galaxy, include_all_keywords=False):
+        kwargs_source = convert_catalog_to_source(
+            galaxy=galaxy,
+            extended_source_type=self._extended_source_type,
+            catalog_type=self._catalog_type,
+            size_model=self._size_model,
+            cosmo=self._cosmo,
+            include_all_keywords=include_all_keywords,
+        )
+        return Source(
+            cosmo=self._cosmo, **kwargs_source, **self._extended_source_kwargs
+        )
+
+    def _draw_source_at_selected(self, selected_index):
+        return self._source_from_object(self._draw_selected_object(selected_index))
+
     def draw_source(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
 
@@ -150,10 +170,9 @@ class Galaxies(SourcePopBase):
         if kwargs_source is None:
             return None
 
-        source_class = Source(
+        return Source(
             cosmo=self._cosmo, **kwargs_source, **self._extended_source_kwargs
         )
-        return source_class
 
     def draw_galaxies(self, area, z_max=None):
         """Draw galaxies within a specified area and redshift limit.
@@ -258,31 +277,33 @@ def _galaxy_size(galaxy, size_model, catalog_type, cosmo):
         return angular_size, physical_size
 
     if "physical_size" in col_names:
-        physical_size = galaxy["physical_size"]
-        if isinstance(physical_size, u.Quantity):
-            physical_size = physical_size.to(u.kpc)
-        else:
-            physical_size *= u.kpc
+        raw_phys = galaxy["physical_size"]
+        physical_size = (
+            float(raw_phys.to_value(u.kpc))
+            if isinstance(raw_phys, u.Quantity)
+            else float(raw_phys)
+        )
     else:
         physical_size = None
     if "angular_size" in col_names:
-        angular_size = galaxy["angular_size"]
-        if isinstance(angular_size, u.Quantity):
-            angular_size = angular_size.to(u.arcsec)
-        else:
-            angular_size *= u.arcsec
+        raw_ang = galaxy["angular_size"]
+        angular_size = (
+            float(raw_ang.to_value(u.arcsec))
+            if isinstance(raw_ang, u.Quantity)
+            else float(raw_ang)
+        )
     else:
         angular_size = None
 
-    if angular_size is None and physical_size is not None:
-        angular_size_rad = physical_size / cosmo.angular_diameter_distance(z).to(u.kpc)
-        angular_size = (angular_size_rad * u.rad).to(u.arcsec)
-    elif physical_size is None and angular_size is not None:
-        physical_size = angular_size.to(u.rad) * cosmo.angular_diameter_distance(z).to(
-            u.kpc
-        )
-    elif angular_size is None and physical_size is None:
+    if angular_size is None and physical_size is None:
         raise ValueError("Either angular_size or physical_size need to be provided.")
+
+    if angular_size is None or physical_size is None:
+        dd_kpc = get_cosmo_cache(cosmo).dd(float(z)) * 1000.0
+        if angular_size is None:
+            angular_size = (physical_size / dd_kpc) * _RAD_TO_ARCSEC
+        else:
+            physical_size = angular_size * _ARCSEC_TO_RAD * dd_kpc
 
     if catalog_type == "skypy":
         # skypy model comes with physical sizes in kpc
@@ -290,10 +311,11 @@ def _galaxy_size(galaxy, size_model, catalog_type, cosmo):
         # rescales skypy source size to Shibuya et al. (2015).
         # compute the rescaled physical size. The resulted value is divided by 2.5 to
         #  match the best-fit model given in https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-        angular_size *= galaxy_size_redshift_evolution(z) / 2.5
-        physical_size *= galaxy_size_redshift_evolution(z) / 2.5
+        scale = float(galaxy_size_redshift_evolution(float(z)) / 2.5)
+        angular_size *= scale
+        physical_size *= scale
 
-    return angular_size.value, physical_size.value
+    return angular_size, physical_size
 
 
 def convert_catalog_to_source(
