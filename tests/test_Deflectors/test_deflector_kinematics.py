@@ -4,7 +4,7 @@ import pytest
 from astropy.cosmology import FlatLambdaCDM
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.LightModel.light_model import LightModel
-from lenstronomy.Util import constants
+from lenstronomy.Util import constants, util
 from lenstronomy.Util.param_util import ellipticity2phi_q
 
 from slsim.Deflectors.deflector import Deflector
@@ -73,26 +73,59 @@ def test_kinematic_grid():
     npt.assert_almost_equal(np.max(y), 0.9)
 
 
-def test_vrms_aperture():
+def test_make_mask():
+    x, y, _ = DeflectorKinematics.kinematic_grid(map_half_size=2.0, grid_size=0.1)
+    r = np.sqrt(x**2 + y**2)
+    mask = DeflectorKinematics._make_mask(x, y, "circular", {"radius": 0.9})
+    npt.assert_array_equal(mask, r <= 0.9)
+    mask = DeflectorKinematics._make_mask(x, y, "annulus", {"r_in": 1.1, "r_out": 1.9})
+    npt.assert_array_equal(mask, (r >= 1.1) & (r <= 1.9))
+    # unsupported aperture type, or kwargs_aperture not in its format
+    invalid = [
+        ("square", {"radius": 1}),
+        ("circular", None),
+        ("circular", 1.0),
+        ("circular", {"r": 1}),
+        ("circular", {"radius": 1, "r_out": 2}),
+        ("circular", {"radius": 0}),
+        ("annulus", {"radius": 1}),
+        ("annulus", {"r_in": 1}),
+        ("annulus", {"r_in": 2, "r_out": 1}),
+        ("annulus", {"r_in": -1, "r_out": 1}),
+    ]
+    for aperture_type, kwargs_aperture in invalid:
+        with pytest.raises(ValueError):
+            DeflectorKinematics._make_mask(x, y, aperture_type, kwargs_aperture)
+
+
+def test_flux_weighted_model():
     x, y, _ = DeflectorKinematics.kinematic_grid(map_half_size=2.0, grid_size=0.1)
     r = np.sqrt(x**2 + y**2)
     flux = np.exp(-r)
     vrms = np.where(r < 1, 200.0, 100.0)
+    inner = DeflectorKinematics._make_mask(x, y, "circular", {"radius": 0.9})
+    outer = DeflectorKinematics._make_mask(x, y, "annulus", {"r_in": 1.1, "r_out": 1.9})
     npt.assert_almost_equal(
-        DeflectorKinematics.flux_weighted_vrms(
-            vrms, flux, x, y, "circular", {"radius": 0.9}
-        ),
-        200,
+        DeflectorKinematics.flux_weighted_model(vrms, False, flux, inner), 200
     )
     npt.assert_almost_equal(
-        DeflectorKinematics.flux_weighted_vrms(
-            vrms, flux, x, y, "annulus", {"r_in": 1.1, "r_out": 1.9}
-        ),
-        100,
+        DeflectorKinematics.flux_weighted_model(vrms, False, flux, outer), 100
     )
-    with pytest.raises(ValueError):
-        DeflectorKinematics.flux_weighted_vrms(
-            vrms, flux, x, y, "square", {"radius": 1}
+    # J is proportional to V_rms^2: J of the aperture is J of the aperture V_rms
+    dds, ds = 800.0, 1500.0
+    full = DeflectorKinematics._make_mask(x, y, "circular", {"radius": 2.0})
+    vrms_aperture = DeflectorKinematics.flux_weighted_model(vrms, False, flux, full)
+    J = DeflectorKinematics.vrms_to_J(vrms, dds, ds)
+    npt.assert_almost_equal(
+        DeflectorKinematics.flux_weighted_model(J, True, flux, full)
+        / DeflectorKinematics.vrms_to_J(vrms_aperture, dds, ds),
+        1,
+    )
+    # no bin within the aperture
+    empty = DeflectorKinematics._make_mask(x, y, "circular", {"radius": 0.01})
+    with pytest.warns(UserWarning, match="No bin"):
+        assert np.isnan(
+            DeflectorKinematics.flux_weighted_model(vrms, False, flux, empty)
         )
 
 
@@ -224,6 +257,73 @@ class TestDeflectorKinematics(object):
         with pytest.raises(ValueError):
             self.kinematics.vrms_map(moment="xx", **kwargs_bins)
 
+    def test_vrms_map_frame(self):
+        kwargs_map = {
+            "map_half_size": 1.0,
+            "grid_size": 0.25,
+            "pix_size": 0.25,
+            "sigma_psf": 0.3,
+            "inc": 80,
+        }
+        vrms_galaxy = self.kinematics.vrms_map(**kwargs_map)
+        vrms_sky = self.kinematics.vrms_map(frame="sky", **kwargs_map)
+        assert vrms_galaxy["frame"] == "galaxy"
+        assert vrms_sky["frame"] == "sky"
+        # only the bins are rotated
+        npt.assert_allclose(vrms_sky["model"], vrms_galaxy["model"])
+        npt.assert_allclose(vrms_sky["flux"], vrms_galaxy["flux"])
+        assert vrms_sky["shape"] == vrms_galaxy["shape"]
+
+        # counterclockwise rotation by the light position angle of the lenstronomy
+        # light kwargs, i.e. of the deflector light in slsim images
+        kwargs_light = self.kinematics.kwargs_light[0]
+        phi, q = ellipticity2phi_q(kwargs_light["e1"], kwargs_light["e2"])
+        x, y = vrms_galaxy["xbin"], vrms_galaxy["ybin"]
+        npt.assert_allclose(vrms_sky["xbin"], x * np.cos(phi) - y * np.sin(phi))
+        npt.assert_allclose(vrms_sky["ybin"], x * np.sin(phi) + y * np.cos(phi))
+
+        # the returned position angle converts between the two frames
+        for vrms in (vrms_galaxy, vrms_sky):
+            npt.assert_almost_equal(vrms["pa_light_sky"], phi)
+        pa = vrms_sky["pa_light_sky"]
+        x_galaxy, y_galaxy = util.rotate(vrms_sky["xbin"], vrms_sky["ybin"], pa)
+        npt.assert_allclose(x_galaxy, x, atol=1e-12)
+        npt.assert_allclose(y_galaxy, y, atol=1e-12)
+        x_sky, y_sky = util.rotate(x, y, -pa)
+        npt.assert_allclose(x_sky, vrms_sky["xbin"])
+        npt.assert_allclose(y_sky, vrms_sky["ybin"])
+
+        # the elliptical light of the image at the sky bins equals the light aligned
+        # with the x-axis at the galaxy bins
+        light_model = LightModel(["SERSIC_ELLIPSE"])
+        kwargs_sersic = {
+            "amp": 1.0,
+            "R_sersic": kwargs_light["R_sersic"],
+            "n_sersic": kwargs_light["n_sersic"],
+            "e1": kwargs_light["e1"],
+            "e2": kwargs_light["e2"],
+            "center_x": 0.0,
+            "center_y": 0.0,
+        }
+        e = (1 - q) / (1 + q)
+        kwargs_aligned = {**kwargs_sersic, "e1": e, "e2": 0.0}
+        npt.assert_allclose(
+            light_model.surface_brightness(
+                vrms_sky["xbin"], vrms_sky["ybin"], [kwargs_sersic]
+            ),
+            light_model.surface_brightness(x, y, [kwargs_aligned]),
+            rtol=1e-10,
+        )
+
+        # rotation about the deflector center leaves circular apertures unchanged
+        kwargs_aperture = {"radius": self.kwargs_light["angular_size"]}
+        npt.assert_almost_equal(
+            self.kinematics.vrms_aperture(vrms_sky, kwargs_aperture=kwargs_aperture),
+            self.kinematics.vrms_aperture(vrms_galaxy, kwargs_aperture=kwargs_aperture),
+        )
+        with pytest.raises(ValueError):
+            self.kinematics.vrms_map(frame="image", **kwargs_map)
+
     def test_vrms_aperture(self):
         kwargs_map = {
             "map_half_size": 2.8,
@@ -231,18 +331,58 @@ class TestDeflectorKinematics(object):
             "pix_size": 0.2,
             "inc": 80,
         }
-        vrms_aperture = self.kinematics.vrms_aperture(sigma_psf=0.3, **kwargs_map)
         vrms_map = self.kinematics.vrms_map(sigma_psf=0.3, **kwargs_map)
+        kwargs_aperture = {"radius": self.kwargs_light["angular_size"]}
+        vrms_aperture = self.kinematics.vrms_aperture(
+            vrms_map, kwargs_aperture=kwargs_aperture
+        )
+        mask = DeflectorKinematics._make_mask(
+            vrms_map["xbin"], vrms_map["ybin"], "circular", kwargs_aperture
+        )
         npt.assert_almost_equal(
             vrms_aperture,
-            DeflectorKinematics.flux_weighted_vrms(
-                vrms_map["model"],
-                vrms_map["flux"],
-                vrms_map["xbin"],
-                vrms_map["ybin"],
-                kwargs_aperture={"radius": self.kwargs_light["angular_size"]},
+            DeflectorKinematics.flux_weighted_model(
+                vrms_map["model"], False, vrms_map["flux"], mask
             ),
         )
+        kwargs_annulus = {"r_in": 0.5, "r_out": 1.5}
+        mask = DeflectorKinematics._make_mask(
+            vrms_map["xbin"], vrms_map["ybin"], "annulus", kwargs_annulus
+        )
+        npt.assert_almost_equal(
+            self.kinematics.vrms_aperture(
+                vrms_map, aperture_type="annulus", kwargs_aperture=kwargs_annulus
+            ),
+            DeflectorKinematics.flux_weighted_model(
+                vrms_map["model"], False, vrms_map["flux"], mask
+            ),
+        )
+
+        # dimensionless map: J of each bin, and J of the aperture V_rms
+        J_map = self.kinematics.vrms_map(
+            sigma_psf=0.3, dimensionless=True, **kwargs_map
+        )
+        assert J_map["dimensionless"] and not vrms_map["dimensionless"]
+        dds, ds = self.lens_cosmo.dds, self.lens_cosmo.ds
+        npt.assert_almost_equal(J_map["dds"], dds)
+        npt.assert_almost_equal(J_map["ds"], ds)
+        npt.assert_allclose(
+            J_map["model"], DeflectorKinematics.vrms_to_J(vrms_map["model"], dds, ds)
+        )
+        npt.assert_allclose(J_map["flux"], vrms_map["flux"])
+        npt.assert_allclose(
+            self.kinematics.vrms_aperture(J_map, kwargs_aperture=kwargs_aperture),
+            DeflectorKinematics.vrms_to_J(vrms_aperture, dds, ds),
+            rtol=1e-10,
+        )
+
+        # kwargs_aperture is required, in the format of aperture_type
+        with pytest.raises(ValueError):
+            self.kinematics.vrms_aperture(vrms_map)
+        with pytest.raises(ValueError):
+            self.kinematics.vrms_aperture(
+                vrms_map, aperture_type="annulus", kwargs_aperture=kwargs_aperture
+            )
 
     def test_cosmology_independence(self):
         # mass normalized by vel_disp: the physical V_rms does not depend on cosmology
@@ -268,9 +408,10 @@ class TestDeflectorKinematics(object):
         deflector = self._deflector(kwargs_mass, kwargs_light)
         kinematics = DeflectorKinematics(deflector, self.cosmo, self.z_source)
         r_eff = self.kwargs_light["angular_size"]
-        vrms = kinematics.vrms_aperture(
+        vrms_map = kinematics.vrms_map(
             map_half_size=r_eff, grid_size=0.05, pix_size=0.05, inc=90
         )
+        vrms = kinematics.vrms_aperture(vrms_map, kwargs_aperture={"radius": r_eff})
         light_model_list, kwargs_light = deflector.light_model_lenstronomy()
         theta_E = self.lens_cosmo.sis_sigma_v2theta_E(self.kwargs_mass["vel_disp"])
         vel_disp_galkin = vel_disp_power_law(
@@ -404,9 +545,9 @@ class TestDeflectorKinematics(object):
         kwargs_aperture = {"radius": self.kwargs_light["angular_size"]}
         npt.assert_allclose(
             kinematics_double.vrms_aperture(
-                kwargs_aperture=kwargs_aperture, **kwargs_map
+                vrms_double, kwargs_aperture=kwargs_aperture
             ),
-            kinematics.vrms_aperture(kwargs_aperture=kwargs_aperture, **kwargs_map),
+            kinematics.vrms_aperture(vrms, kwargs_aperture=kwargs_aperture),
             rtol=1e-3,
         )
 
