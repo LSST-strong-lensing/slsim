@@ -99,16 +99,6 @@ class TestKilonovaEvent(object):
         assert "ps_mag_i" in light_curve["i"].keys()
         assert "MJD" in light_curve["r"].keys()
         assert "ps_mag_r" in light_curve["r"].keys()
-
-        expected_table = self.source._lightcurve_class.get_apparent_magnitude(
-            time=self.source._lightcurve_time,
-            band="i",
-        )
-        npt.assert_allclose(light_curve["i"]["MJD"][1:-1], expected_table["time"])
-        npt.assert_allclose(
-            light_curve["i"]["ps_mag_i"][1:-1], expected_table["magnitude"]
-        )
-
         assert not light_curve_none
 
         with pytest.raises(ValueError):
@@ -146,15 +136,15 @@ class TestKilonovaEvent(object):
         assert np.isinf(light_curve["i"]["ps_mag_i"][-1])
 
         # test specific values of a model lightcurve
-        expected_table = self.source._lightcurve_class.get_apparent_magnitude(
-            time=self.source._lightcurve_time,
-            band="i",
+        expected_times, expected_magnitudes = (
+            self.source._lightcurve_class.get_apparent_magnitude(
+                time=self.source._lightcurve_time,
+                band="i",
+            )
         )
 
-        npt.assert_allclose(light_curve["i"]["MJD"][1:-1], expected_table["time"])
-        npt.assert_allclose(
-            light_curve["i"]["ps_mag_i"][1:-1], expected_table["magnitude"]
-        )
+        npt.assert_allclose(light_curve["i"]["MJD"][1:-1], expected_times)
+        npt.assert_allclose(light_curve["i"]["ps_mag_i"][1:-1], expected_magnitudes)
 
     def test_light_curve_warning(self):
         """Test that a UserWarning is raised when lightcurve generation

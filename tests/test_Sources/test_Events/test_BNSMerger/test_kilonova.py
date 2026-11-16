@@ -1,7 +1,6 @@
 import numpy as np
 from slsim.Sources.Events.BNSMerger.kilonova import Kilonova
 from astropy.cosmology import FlatLambdaCDM
-from astropy.table import Table
 import pytest
 
 
@@ -40,16 +39,11 @@ def kilonova_class(kilonova_parameters):
 
 def test_kilonova_mag(kilonova_class):
     time = np.array([0.5, 1.0, 2.0])
-    light_curve = kilonova_class.get_apparent_magnitude(time=time, band="r")
-
-    assert isinstance(light_curve, Table)
-    assert "time" in light_curve.colnames
-    assert "magnitude" in light_curve.colnames
-    assert len(light_curve) > 0
-
-    magnitudes = light_curve["magnitude"]
+    times, magnitudes = kilonova_class.get_apparent_magnitude(time=time, band="r")
     finite_magnitudes = magnitudes[np.isfinite(magnitudes)]
 
+    assert len(times) > 0
+    assert times.shape == magnitudes.shape
     assert np.any(np.isfinite(magnitudes))
     assert np.all(np.isfinite(magnitudes) | np.isposinf(magnitudes))
     assert np.all(finite_magnitudes > 0)

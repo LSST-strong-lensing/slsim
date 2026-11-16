@@ -1,6 +1,5 @@
 import numpy as np
 import speclite.filters
-from astropy.table import Table
 from astropy import units as u
 from slsim.ImageSimulation.image_quality_lenstronomy import get_speclite_filtername
 from redback.transient_models import kilonova_models
@@ -77,7 +76,8 @@ class Kilonova:
         :type band: str or list
         :param zpsys: Optional, AB or Vega (AB default)
         :type zpsys: str
-        :return: magnitude of source
+        :return: Tuple of spectrum times in days and their corresponding
+            AB magnitudes.
         """
 
         spectrum = self._model(
@@ -93,9 +93,4 @@ class Kilonova:
         current_filter = speclite.filters.load_filter(filter_name)
         magnitudes = current_filter.get_ab_magnitude(spectrum.spectra, wavelength)
 
-        return Table(
-            {
-                "time": spectrum.time,
-                "magnitude": magnitudes,
-            }
-        )
+        return spectrum.time, magnitudes

@@ -101,13 +101,11 @@ class KilonovaEvent(SourceBase):
                 provided_band = element
 
                 try:
-                    light_curve_table = lightcurve_class.get_apparent_magnitude(
+                    times, magnitudes = lightcurve_class.get_apparent_magnitude(
                         time=times,
                         band=provided_band,
                     )
                     # make sure before and after the event, the flux is zero
-                    times = light_curve_table["time"]
-                    magnitudes = light_curve_table["magnitude"]
                     magnitudes = np.append(np.inf, magnitudes)
                     magnitudes = np.append(magnitudes, np.inf)
                     padded_times = np.append(times[0] - (times[1] - times[0]), times)
