@@ -32,6 +32,10 @@ def test_dNhalodzdlnM_lens():
         dN_ar = dNhalodzdlnM_lens(Mh_ar, z, cosmo)
         assert all(num > 0 for num in dN_ar)
 
+    for z in z_ar:
+        dN_ar = dNhalodzdlnM_lens(Mh_ar, z, cosmo, mdef="200c", model="tinker08")
+        assert all(num > 0 for num in dN_ar)
+
 
 def test_concent_m_w_scatter():
     Mh_ar = np.logspace(10, 16, 10)  # in units of M_sol/h
