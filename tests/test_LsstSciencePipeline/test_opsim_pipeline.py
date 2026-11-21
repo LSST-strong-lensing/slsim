@@ -368,7 +368,8 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
         assert np.all(missing_flux == -1.0)
         assert np.all(missing_mag_err_low == -1.0)
         assert np.all(missing_mag_err_high == -1.0)
-        assert np.all(missing_flux_err == -1.0)    
+        assert np.all(missing_flux_err == -1.0)
+
 
 def test_transient_data_with_cadence_falls_back_to_arrival_times(
     monkeypatch, lens_class_instance, exposure_data
@@ -390,6 +391,7 @@ def test_transient_data_with_cadence_falls_back_to_arrival_times(
 
     assert isinstance(result, Table)
     assert len(result) > 0
+
 
 if __name__ == "__main__":
     pytest.main()
