@@ -354,6 +354,42 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
         np.array(lightcurve_error_i_high)
     )
 
+    # when there are fewer than 4 images, the missing ones should be filled with -1
+    n_images = lens_class_instance.image_number[0]
+    for i in range(n_images, 4):
+
+        missing_mag = result[f"mag_image_{i+1}"]
+        missing_flux = result[f"flux_image_{i+1}"]
+        missing_mag_err_low = result[f"mag_error_image_{i+1}_low"]
+        missing_mag_err_high = result[f"mag_error_image_{i+1}_high"]
+        missing_flux_err = result[f"flux_error_image_{i+1}"]
+
+        assert np.all(missing_mag == -1.0)
+        assert np.all(missing_flux == -1.0)
+        assert np.all(missing_mag_err_low == -1.0)
+        assert np.all(missing_mag_err_high == -1.0)
+        assert np.all(missing_flux_err == -1.0)    
+
+def test_transient_data_with_cadence_falls_back_to_arrival_times(
+    monkeypatch, lens_class_instance, exposure_data
+):
+    source_obj = lens_class_instance.source(0)
+    source_inner = getattr(source_obj, "_source", source_obj)
+    source_inner._lightcurve_time = None
+
+    monkeypatch.setattr(
+        lens_class_instance,
+        "point_source_arrival_times",
+        lambda: [np.array([10.0, 30.0], dtype=float)],
+    )
+
+    result = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data,
+    )
+
+    assert isinstance(result, Table)
+    assert len(result) > 0
 
 if __name__ == "__main__":
     pytest.main()
