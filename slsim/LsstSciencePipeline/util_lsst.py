@@ -285,18 +285,12 @@ def transient_data_with_cadence(
     if lightcurve_time is None:
         arrival_times = lens_class.point_source_arrival_times()[0]
         t_start, t_end = (
-            np.min(arrival_times + np.max(arrival_times)) - 60,
-            np.max(arrival_times + np.max(arrival_times)) + 180,
+            np.min(arrival_times) - 60,
+            np.max(arrival_times) + 180,
         )
-        # arrival_times = np.asarray(
-        #     lens_class.point_source_arrival_times()[0], dtype=float
-        # )
-        # if arrival_times.size > 0:
-        #     t_start = np.min(arrival_times) - 60
-        #     t_end = np.max(arrival_times) + 180
-        # else:
-        #     t_start, t_end = -60.0, 180.0
         lightcurve_time = np.linspace(t_start, t_end, 1000)
+        if hasattr(source_inner, "_lightcurve_time"):
+            source_inner._lightcurve_time = lightcurve_time
 
     min_lc_time, max_lc_time = np.min(lightcurve_time), np.max(lightcurve_time)
 
