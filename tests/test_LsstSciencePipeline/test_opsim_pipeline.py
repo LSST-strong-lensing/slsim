@@ -14,6 +14,7 @@ from slsim.Deflectors.deflector import Deflector
 import astropy.coordinates as coord
 import astropy.units as u
 import pytest
+import slsim.LsstSciencePipeline.util_lsst as util_lsst
 
 try:
     import jax
@@ -237,8 +238,8 @@ def lens_class_instance():
             "sn_type": "Ia",
             "sn_absolute_mag_band": "bessellb",
             "sn_absolute_zpsys": "ab",
-            "lightcurve_time": np.linspace(-50, 100, 150),
             "sn_modeldir": None,
+            "lightcurve_time": None,
         }
         source1 = Source(
             point_source_type="supernova",
@@ -374,10 +375,6 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
 def test_transient_data_with_cadence_falls_back_to_arrival_times(
     monkeypatch, lens_class_instance, exposure_data
 ):
-    source_obj = lens_class_instance.source(0)
-    source_inner = getattr(source_obj, "_source", source_obj)
-    source_inner._lightcurve_time = None
-
     monkeypatch.setattr(
         lens_class_instance,
         "point_source_arrival_times",
@@ -391,6 +388,40 @@ def test_transient_data_with_cadence_falls_back_to_arrival_times(
 
     assert isinstance(result, Table)
     assert len(result) > 0
+
+
+def test_transient_data_with_cadence_zero_flux_and_missing_images(
+    monkeypatch, lens_class_instance, exposure_data
+):
+    monkeypatch.setattr(
+        util_lsst,
+        "magnitude_to_amplitude",
+        lambda magnitude, zero_point: 0.0,
+    )
+    monkeypatch.setattr(
+        type(lens_class_instance),
+        "image_number",
+        property(lambda self: [2]),
+    )
+
+    result = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data,
+        noise=False,
+    )
+
+    assert len(result) > 0
+    assert np.all(result["flux_image_1"] == 0.0)
+    assert np.all(result["flux_image_2"] == 0.0)
+    assert np.all(np.isnan(result["mag_image_1"]))
+    assert np.all(np.isnan(result["mag_image_2"]))
+
+    for i in range(3, 5):
+        assert np.all(result[f"mag_image_{i}"] == -1.0)
+        assert np.all(result[f"flux_image_{i}"] == -1.0)
+        assert np.all(result[f"mag_error_image_{i}_low"] == -1.0)
+        assert np.all(result[f"mag_error_image_{i}_high"] == -1.0)
+        assert np.all(result[f"flux_error_image_{i}"] == -1.0)
 
 
 if __name__ == "__main__":
