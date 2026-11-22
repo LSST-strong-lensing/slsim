@@ -424,5 +424,43 @@ def test_transient_data_with_cadence_zero_flux_and_missing_images(
         assert np.all(result[f"flux_error_image_{i}"] == -1.0)
 
 
+def test_transient_data_with_cadence_return_original(
+    monkeypatch, lens_class_instance, exposure_data
+):
+    calls = []
+
+    def mock_point_source_magnitude(
+        band, lensed, time, microlensing, kwargs_microlensing
+    ):
+        calls.append((microlensing, kwargs_microlensing))
+        return [np.array([21.0] * lens_class_instance.image_number[0])]
+
+    monkeypatch.setattr(
+        lens_class_instance,
+        "point_source_magnitude",
+        mock_point_source_magnitude,
+    )
+
+    kwargs_microlensing = {"microlensing_type": "test"}
+    results = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data,
+        noise=False,
+        return_original=True,
+        kwargs_microlensing=kwargs_microlensing,
+    )
+
+    assert set(results) == {"ml", "noml"}
+    assert all(isinstance(result, Table) for result in results.values())
+    assert all(len(result) > 0 for result in results.values())
+    assert any(microlensing for microlensing, _ in calls)
+    assert any(not microlensing for microlensing, _ in calls)
+    assert all(
+        kwargs is kwargs_microlensing
+        for microlensing, kwargs in calls
+        if microlensing
+    )
+
+
 if __name__ == "__main__":
     pytest.main()
