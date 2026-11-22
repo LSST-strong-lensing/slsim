@@ -456,9 +456,7 @@ def test_transient_data_with_cadence_return_original(
     assert any(microlensing for microlensing, _ in calls)
     assert any(not microlensing for microlensing, _ in calls)
     assert all(
-        kwargs is kwargs_microlensing
-        for microlensing, kwargs in calls
-        if microlensing
+        kwargs is kwargs_microlensing for microlensing, kwargs in calls if microlensing
     )
 
 
