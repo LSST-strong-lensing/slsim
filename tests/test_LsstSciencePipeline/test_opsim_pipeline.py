@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from astropy.table import Table
+from astropy.table import Table, Column
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Lenses.lens import Lens
 from slsim.LsstSciencePipeline.opsim_pipeline import opsim_time_series_images_data
@@ -301,7 +301,8 @@ def exposure_data():
     )
 
 
-def test_transient_data_with_cadence(lens_class_instance, exposure_data):
+
+def test_transient_data_with_cadence(monkeypatch, lens_class_instance, exposure_data):
     result = transient_data_with_cadence(
         lens_class=lens_class_instance,
         exposure_data=exposure_data,
@@ -371,10 +372,7 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
         assert np.all(missing_mag_err_high == -1.0)
         assert np.all(missing_flux_err == -1.0)
 
-
-def test_transient_data_with_cadence_falls_back_to_arrival_times(
-    monkeypatch, lens_class_instance, exposure_data
-):
+    # Test that if point_source_arrival_times is defined, it is used instead of point_source_magnitude
     monkeypatch.setattr(
         lens_class_instance,
         "point_source_arrival_times",
@@ -389,10 +387,7 @@ def test_transient_data_with_cadence_falls_back_to_arrival_times(
     assert isinstance(result, Table)
     assert len(result) > 0
 
-
-def test_transient_data_with_cadence_zero_flux_and_missing_images(
-    monkeypatch, lens_class_instance, exposure_data
-):
+    # Test that if magnitude_to_amplitude returns 0, the fluxes are 0 and magnitudes are NaN, and missing images are filled with -1
     monkeypatch.setattr(
         util_lsst,
         "magnitude_to_amplitude",
@@ -423,10 +418,7 @@ def test_transient_data_with_cadence_zero_flux_and_missing_images(
         assert np.all(result[f"mag_error_image_{i}_high"] == -1.0)
         assert np.all(result[f"flux_error_image_{i}"] == -1.0)
 
-
-def test_transient_data_with_cadence_return_original(
-    monkeypatch, lens_class_instance, exposure_data
-):
+    # Test that the function returns both microlensed and non-microlensed results
     calls = []
 
     def mock_point_source_magnitude(
@@ -458,6 +450,28 @@ def test_transient_data_with_cadence_return_original(
     assert all(
         kwargs is kwargs_microlensing for microlensing, kwargs in calls if microlensing
     )
+
+    # Test that the function returns a valid result when the bkg_noise column is empty, and that the magnitudes are NaN and fluxes are 0, and missing images are filled with -1
+    exposure_data_with_empty = exposure_data.copy()
+    empty_bkg_noise = [np.array([], dtype=float)] * len(exposure_data_with_empty)
+    exposure_data_with_empty.replace_column(
+        "bkg_noise", Column(name="bkg_noise", data=empty_bkg_noise, dtype=object)
+    )
+
+    monkeypatch.setattr(
+        util_lsst,
+        "magnitude_to_amplitude",
+        lambda magnitude, zero_point: 0.0,
+    )
+
+    result = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data_with_empty,
+        noise=False,
+    )
+
+    assert isinstance(result, Table)
+    assert len(result) > 0
 
 
 if __name__ == "__main__":
