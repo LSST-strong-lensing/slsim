@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from astropy.table import Table
+from astropy.table import Table, Column
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Lenses.lens import Lens
 from slsim.LsstSciencePipeline.opsim_pipeline import opsim_time_series_images_data
@@ -14,6 +14,7 @@ from slsim.Deflectors.deflector import Deflector
 import astropy.coordinates as coord
 import astropy.units as u
 import pytest
+import slsim.LsstSciencePipeline.util_lsst as util_lsst
 
 try:
     import jax
@@ -237,8 +238,8 @@ def lens_class_instance():
             "sn_type": "Ia",
             "sn_absolute_mag_band": "bessellb",
             "sn_absolute_zpsys": "ab",
-            "lightcurve_time": np.linspace(-50, 100, 150),
             "sn_modeldir": None,
+            "lightcurve_time": None,
         }
         source1 = Source(
             point_source_type="supernova",
@@ -300,7 +301,7 @@ def exposure_data():
     )
 
 
-def test_transient_data_with_cadence(lens_class_instance, exposure_data):
+def test_transient_data_with_cadence(monkeypatch, lens_class_instance, exposure_data):
     result = transient_data_with_cadence(
         lens_class=lens_class_instance,
         exposure_data=exposure_data,
@@ -309,13 +310,17 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     expected_keys = lightcurves.keys()
     colname = result.colnames
     assert isinstance(result, Table)
-    assert len(colname) == 22  # 8 already existing col and 15 newly added.
+    assert len(colname) == 30  # 22 already existing col and 8 newly added.
     assert "obs_time_in_days" in colname
     assert "lens_id" in colname
     assert "mag_image_1" in colname
     assert "mag_image_2" in colname
     assert "mag_image_3" in colname
     assert "mag_image_4" in colname
+    assert "flux_image_1" in colname
+    assert "flux_image_2" in colname
+    assert "flux_image_3" in colname
+    assert "flux_image_4" in colname
     assert "mag_error_image_1_low" in colname
     assert "mag_error_image_1_high" in colname
     assert "mag_error_image_2_low" in colname
@@ -324,10 +329,16 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     assert "mag_error_image_3_high" in colname
     assert "mag_error_image_4_low" in colname
     assert "mag_error_image_4_high" in colname
+    assert "flux_error_image_1" in colname
+    assert "flux_error_image_2" in colname
+    assert "flux_error_image_3" in colname
+    assert "flux_error_image_4" in colname
 
     assert "magnitudes" in expected_keys
     assert "errors_low" in expected_keys
     assert "errors_high" in expected_keys
+    assert "fluxes" in lightcurves
+    assert "flux_errors" in lightcurves
     assert "obs_time" in expected_keys
     results_i = result[result["band"] == "i"]
     mag_i = results_i["mag_image_1"]
@@ -343,6 +354,123 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     assert np.all(np.array(list(error_i_high))) == np.all(
         np.array(lightcurve_error_i_high)
     )
+
+    # when there are fewer than 4 images, the missing ones should be filled with -1
+    n_images = lens_class_instance.image_number[0]
+    for i in range(n_images, 4):
+
+        missing_mag = result[f"mag_image_{i+1}"]
+        missing_flux = result[f"flux_image_{i+1}"]
+        missing_mag_err_low = result[f"mag_error_image_{i+1}_low"]
+        missing_mag_err_high = result[f"mag_error_image_{i+1}_high"]
+        missing_flux_err = result[f"flux_error_image_{i+1}"]
+
+        assert np.all(missing_mag == -1.0)
+        assert np.all(missing_flux == -1.0)
+        assert np.all(missing_mag_err_low == -1.0)
+        assert np.all(missing_mag_err_high == -1.0)
+        assert np.all(missing_flux_err == -1.0)
+
+    # Test that if point_source_arrival_times is defined, it is used instead of point_source_magnitude
+    monkeypatch.setattr(
+        lens_class_instance,
+        "point_source_arrival_times",
+        lambda: [np.array([10.0, 30.0], dtype=float)],
+    )
+
+    result = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data,
+    )
+
+    assert isinstance(result, Table)
+    assert len(result) > 0
+
+    # Test that if magnitude_to_amplitude returns 0, the fluxes are 0 and magnitudes are NaN, and missing images are filled with -1
+    monkeypatch.setattr(
+        util_lsst,
+        "magnitude_to_amplitude",
+        lambda magnitude, zero_point: 0.0,
+    )
+    monkeypatch.setattr(
+        type(lens_class_instance),
+        "image_number",
+        property(lambda self: [2]),
+    )
+
+    result = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data,
+        noise=False,
+    )
+
+    assert len(result) > 0
+    assert np.all(result["flux_image_1"] == 0.0)
+    assert np.all(result["flux_image_2"] == 0.0)
+    assert np.all(np.isnan(result["mag_image_1"]))
+    assert np.all(np.isnan(result["mag_image_2"]))
+
+    for i in range(3, 5):
+        assert np.all(result[f"mag_image_{i}"] == -1.0)
+        assert np.all(result[f"flux_image_{i}"] == -1.0)
+        assert np.all(result[f"mag_error_image_{i}_low"] == -1.0)
+        assert np.all(result[f"mag_error_image_{i}_high"] == -1.0)
+        assert np.all(result[f"flux_error_image_{i}"] == -1.0)
+
+    # Test that the function returns both microlensed and non-microlensed results
+    calls = []
+
+    def mock_point_source_magnitude(
+        band, lensed, time, microlensing, kwargs_microlensing
+    ):
+        calls.append((microlensing, kwargs_microlensing))
+        return [np.array([21.0] * lens_class_instance.image_number[0])]
+
+    monkeypatch.setattr(
+        lens_class_instance,
+        "point_source_magnitude",
+        mock_point_source_magnitude,
+    )
+
+    kwargs_microlensing = {"microlensing_type": "test"}
+    results = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data,
+        noise=False,
+        return_original=True,
+        kwargs_microlensing=kwargs_microlensing,
+    )
+
+    assert set(results) == {"ml", "noml"}
+    assert all(isinstance(result, Table) for result in results.values())
+    assert all(len(result) > 0 for result in results.values())
+    assert any(microlensing for microlensing, _ in calls)
+    assert any(not microlensing for microlensing, _ in calls)
+    assert all(
+        kwargs is kwargs_microlensing for microlensing, kwargs in calls if microlensing
+    )
+
+    # Test that the function returns a valid result when the bkg_noise column is empty, and that the magnitudes are NaN and fluxes are 0, and missing images are filled with -1
+    exposure_data_with_empty = exposure_data.copy()
+    empty_bkg_noise = [np.array([], dtype=float)] * len(exposure_data_with_empty)
+    exposure_data_with_empty.replace_column(
+        "bkg_noise", Column(name="bkg_noise", data=empty_bkg_noise, dtype=object)
+    )
+
+    monkeypatch.setattr(
+        util_lsst,
+        "magnitude_to_amplitude",
+        lambda magnitude, zero_point: 0.0,
+    )
+
+    result = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data_with_empty,
+        noise=False,
+    )
+
+    assert isinstance(result, Table)
+    assert len(result) > 0
 
 
 if __name__ == "__main__":
