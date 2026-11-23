@@ -301,7 +301,6 @@ def exposure_data():
     )
 
 
-
 def test_transient_data_with_cadence(monkeypatch, lens_class_instance, exposure_data):
     result = transient_data_with_cadence(
         lens_class=lens_class_instance,
